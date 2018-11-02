@@ -1,0 +1,3 @@
+{
+  "DBHost" : "mongodb://test:test@ds243325.mlab.com:43325/jobsmicroservice"
+}
