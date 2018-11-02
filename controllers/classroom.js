@@ -11,7 +11,7 @@ let twilioOptions = require('../config/twilio.js');
 
 let SDK = require('../lib/sdkconfig.js');
 
-let emails = SDK.emails;
+let university = SDK.university;
 
 const webhookCallbackUrl = "http://weLove.Education/classroom/webhook";
 
