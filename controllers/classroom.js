@@ -57,7 +57,8 @@ exports.getAllClassroomsByUniversity = function(req, res) {
 exports.createUniversityClassroom = function(req, res) {
     let universityId = req.params.id;
     let accountId = req.account._id;
-    // let privilege = req.body.privilege;
+    let uniqueName = req.params.name
+        // let privilege = req.body.privilege;
     let privilege = 100;
     let token = req.body.token;
 
@@ -67,7 +68,7 @@ exports.createUniversityClassroom = function(req, res) {
         let newRoom = new Classroom();
 
         newRoom.recordParticipantsOnConnect = true;
-        newRoom.uniqueName = req.body.title;
+        newRoom.uniqueName = uniqueName;
         newRoom.status = "in-progress";
         newRoom.universityId = universityId;
         newRoom.accountSid = accountId;
@@ -81,7 +82,6 @@ exports.createUniversityClassroom = function(req, res) {
                 recordParticipantsOnConnect: newRoom.recordParticipantsOnConnect,
             })
             .then(room => {
-                console.log(room);
                 newRoom.roomSID = room.sid;
                 newRoom.save(function(err, doc) {
                     if (err)

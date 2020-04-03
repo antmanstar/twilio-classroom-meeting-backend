@@ -36,8 +36,10 @@ var classroom_controller = require('../controllers/classroom.js');
  * @apiError {Number} status Status code.
  */
 
+// id: room sid
 router.post('/:id/join', classroom_controller.joinClassroom);
 
+// id: room sid
 router.delete('/:id/join', classroom_controller.leaveClassroom);
 
 // router.post('/:id/private', classroom_controller.privateMeeting);

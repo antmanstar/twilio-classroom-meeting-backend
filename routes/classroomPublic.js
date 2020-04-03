@@ -39,16 +39,22 @@ var classroom_controller = require('../controllers/classroom.js');
 
 router.get('/all', classroom_controller.getAllClassrooms);
 
-router.post('/university/:id', classroom_controller.createUniversityClassroom);
+// id: universityId, name: rooms' name
+router.post('/university/:id/room/:name', classroom_controller.createUniversityClassroom);
 
+// id: universityId
 router.get('/university/:id', classroom_controller.getClassroomsByAdmin);
 
+// id: room sid
 router.get('/classroom/:id', classroom_controller.getClassroomByRoomId);
 
+// id: room sid
 router.post('/classroom/:id/end', classroom_controller.endClassroom);
 
+// id: universityId
 router.get('/university/:id/all', classroom_controller.getAllClassroomsByUniversity);
 
+// name: room's unique name
 router.get('/classroom/:name/token', classroom_controller.generateAccessToken);
 
 module.exports = router;
