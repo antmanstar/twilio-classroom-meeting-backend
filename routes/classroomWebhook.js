@@ -1,5 +1,5 @@
 var express = require('express');
-var router= express.Router();
+var router = express.Router();
 
 var classroom_controller = require('../controllers/classroom.js');
 /**

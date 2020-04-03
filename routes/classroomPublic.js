@@ -43,10 +43,12 @@ router.post('/university/:id', classroom_controller.createUniversityClassroom);
 
 router.get('/university/:id', classroom_controller.getClassroomsByAdmin);
 
-router.get('/classroom/:id', classroom_controller.getClassroomById);
+router.get('/classroom/:id', classroom_controller.getClassroomByRoomId);
 
 router.post('/classroom/:id/end', classroom_controller.endClassroom);
 
-router.get('/university/:id/all', classroom_controller.getAllClassrooms);
+router.get('/university/:id/all', classroom_controller.getAllClassroomsByUniversity);
+
+router.get('/classroom/:name/token', classroom_controller.generateAccessToken);
 
 module.exports = router;

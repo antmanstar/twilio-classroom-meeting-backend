@@ -40,8 +40,8 @@ router.post('/:id/join', classroom_controller.joinClassroom);
 
 router.delete('/:id/join', classroom_controller.leaveClassroom);
 
-router.post('/:id/private', classroom_controller.privateMeeting);
+// router.post('/:id/private', classroom_controller.privateMeeting);
 
-router.post('/:id/donate', classroom_controller.donate);
+// router.post('/:id/donate', classroom_controller.donate);
 
 module.exports = router;
