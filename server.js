@@ -8,6 +8,7 @@ let compression = require('compression')
 let mongoose = require('mongoose');
 let morgan = require('morgan');
 let bodyParser = require('body-parser');
+let cors = require('cors');
 
 /* Routes */
 let routesPublic = require('./routes/classroomPublic.js');
@@ -71,6 +72,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.text());
 app.use(bodyParser.json({ type: 'application/json' }));
 app.use(compression());
+app.use(cors());
 
 /* app.user custom modification */
 

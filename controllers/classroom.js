@@ -41,7 +41,6 @@ exports.getAllClassrooms = function(req, res) {
 // get all the classrooms in the university
 exports.getAllClassroomsByUniversity = function(req, res) {
     let universityId = req.params.id;
-
     Classroom.find({ universityId: universityId }, function(err, data) {
         if (err) {
             return res.json({ success: false, status: 104 });
@@ -57,7 +56,8 @@ exports.getAllClassroomsByUniversity = function(req, res) {
 exports.createUniversityClassroom = function(req, res) {
     let universityId = req.params.id;
     let accountId = req.account._id;
-    let uniqueName = req.params.name
+    // let uniqueName = req.params.name
+    let uniqueName = req.params.roomName
         // let privilege = req.body.privilege;
     let privilege = 100;
     let token = req.body.token;
@@ -66,7 +66,6 @@ exports.createUniversityClassroom = function(req, res) {
 
     if (privilege >= 99) {
         let newRoom = new Classroom();
-
         newRoom.recordParticipantsOnConnect = true;
         newRoom.uniqueName = uniqueName;
         newRoom.status = "in-progress";
@@ -304,11 +303,11 @@ exports.roomCallback = function(req, res) {
 exports.generateAccessToken = function(req, res) {
     const VideoGrant = AccessToken.VideoGrant;
     const identity = req.account._id;
-    const room = req.params.room;
+    const roomName = req.params.roomName;
 
     // Create Video Grant
     const videoGrant = new VideoGrant({
-        room: room,
+        room: roomName,
     });
 
     // Create an access token which we will sign and return to the client,

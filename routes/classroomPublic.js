@@ -5,7 +5,7 @@ var router = require('../lib/privateRouter');
 var classroom_controller = require('../controllers/classroom.js');
 /**
 
-  Get all channels
+  Get all classrooms
 
 **/
 
@@ -26,11 +26,11 @@ var classroom_controller = require('../controllers/classroom.js');
  *     {
  *       "success": true,
  *       "data": [{"channelId": "532",
- *		"title": "General Channel",
- *		"universityId": "d35",
- *		"members": [35, 43]
+ *		   "title": "General Channel",
+ *		   "universityId": "d35",
+ *	  	 "members": [35, 43]
  *		}],
- *	"status": 03
+ *	     "status": 03
  *     }
  *
  * @apiError {Boolean} success Indicates if request was sucessful or not.
@@ -40,7 +40,7 @@ var classroom_controller = require('../controllers/classroom.js');
 router.get('/all', classroom_controller.getAllClassrooms);
 
 // id: universityId, name: rooms' name
-router.post('/university/:id/room/:name', classroom_controller.createUniversityClassroom);
+router.post('/university/:id/room/:roomName', classroom_controller.createUniversityClassroom);
 
 // id: universityId
 router.get('/university/:id', classroom_controller.getClassroomsByAdmin);
@@ -55,6 +55,6 @@ router.post('/classroom/:id/end', classroom_controller.endClassroom);
 router.get('/university/:id/all', classroom_controller.getAllClassroomsByUniversity);
 
 // name: room's unique name
-router.get('/classroom/:name/token', classroom_controller.generateAccessToken);
+router.get('/classroom/:roomName/token', classroom_controller.generateAccessToken);
 
 module.exports = router;
