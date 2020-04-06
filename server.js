@@ -17,38 +17,7 @@ let routesPrivate = require('./routes/classroomPrivate.js');
 /* CLI Arguments */
 let parseArgs = require('minimist')
 
-/* Port */
-let port;
-
-/* environment variables */
-
-if (process.env.NODE_ENV == 'dev') {
-
-    var args = parseArgs(process.argv.slice(2), {
-        port: 'port'
-    });
-
-    if (args.port == undefined) {
-        throw new Error("To start microservice, must define PORT argument. --port <num>");
-    }
-
-    port = args.port;
-
-} else if (process.env.NODE_ENV == 'test' || process.env.NODE_ENV == 'acceptance') {
-
-    port = 8080;
-
-} else if (process.env.NODE_ENV == 'prod') {
-
-    require('newrelic');
-
-    port = 8080;
-
-} else {
-
-    throw new Error("Set up development variable. 'dev', 'test', 'acceptance', 'prod'");
-
-}
+let port = process.env.PORT || 8080;
 
 /* End CLI Arguments */
 
