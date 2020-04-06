@@ -25,10 +25,10 @@ let port = process.env.PORT || 8080;
 let config = require('config');
 
 /* Database options */
-let options = { useNewUrlParser: true, useUnifiedTopology: true };
+let options = { useMongoClient: true };
 
 /* Database */
-mongoose.connect(config.DBHost, options)
+mongoose.connect(config.DBHost, options);
 let db = mongoose.connection;
 
 /* Mongoose fix depreciation promise */
