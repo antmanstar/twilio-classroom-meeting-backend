@@ -1,3 +1,3 @@
 {
-  "DBHost" : "mongodb://test:test@ds243285.mlab.com:43285/jobsmicroservicetest"
+    "DBHost": "mongodb://localhost:27017/classroom"
 }
