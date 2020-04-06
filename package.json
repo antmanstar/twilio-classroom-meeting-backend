@@ -8,7 +8,7 @@
     },
     "scripts": {
         "test": "mocha --timeout 15000 || true",
-        "start": "node server.js --port=9001"
+        "start": "node server.js"
     },
     "author": "marcelopiomsf",
     "license": "ISC",
