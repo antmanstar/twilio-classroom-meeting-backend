@@ -1,0 +1,3 @@
+{
+    "DBHost": "mongodb://welove:welove!2019@ds259770-a0.mlab.com:59770,ds259770-a1.mlab.com:59770/networkbase-main?replicaSet=rs-ds259770"
+}

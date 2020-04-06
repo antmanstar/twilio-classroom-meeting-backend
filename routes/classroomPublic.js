@@ -57,4 +57,17 @@ router.get('/university/:id/all', classroom_controller.getAllClassroomsByUnivers
 // name: room's unique name
 router.get('/classroom/:roomName/token', classroom_controller.generateAccessToken);
 
+// id: room sid
+router.post('/classroom/:id/rec', classroom_controller.createCompositionRecording);
+
+// id: composition id
+router.get('/composition/:id/', classroom_controller.getComposedMedia);
+
+
+// id: classroom id
+router.post('/classroom/:id/stop', classroom_controller.stopRecording);
+
+// id: classroom id
+router.post('/classroom/:id/start', classroom_controller.startRecording);
+
 module.exports = router;

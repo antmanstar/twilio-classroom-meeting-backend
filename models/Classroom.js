@@ -67,7 +67,9 @@ let ClassroomSchema = new Schema({
     url: {
         type: String
     },
-
+    members: {
+        type: Array,
+    }
 });
 
 // Sets the createdAt parameter equal to the current time
