@@ -13,6 +13,7 @@ let cors = require('cors');
 /* Routes */
 let routesPublic = require('./routes/classroomPublic.js');
 let routesPrivate = require('./routes/classroomPrivate.js');
+let classroomWebhook = require('./routes/classroomWebhook.js');
 
 /* CLI Arguments */
 let parseArgs = require('minimist')
@@ -37,9 +38,7 @@ if (process.env.NODE_ENV == 'dev' || true) {
     port = 80;
 
 } else {
-
     throw new Error("Set up development variable. 'dev', 'test', 'acceptance', 'prod'");
-
 }
 
 /* End CLI Arguments */
@@ -77,6 +76,7 @@ app.use(cors());
 /* app.user custom modification */
 
 /* Accounts routes */
+app.use('/classroom', classroomWebhook);
 app.use('/classroom', routesPublic);
 app.use('/classroom', routesPrivate);
 

@@ -13,7 +13,8 @@ let SDK = require('../lib/sdkconfig.js');
 
 let university = SDK.university;
 
-const webhookCallbackUrl = "http://weLove.Education/classroom/webhook";
+const webhookRoomCallbackUrl = "http://010a0076.ngrok.io/classroom/classroom/webhook/roomCallback";
+const webhookCompositionCallbackUrl = "http://010a0076.ngrok.io/classroom/classroom/webhook/compositionCallback"
 
 const accountSid = twilioOptions.TWILIO_ACCOUNT_SID;
 const authToken = twilioOptions.TWILIO_ACCOUNT_AUTH_TOKEN;
@@ -74,7 +75,7 @@ exports.createUniversityClassroom = function(req, res) {
         newRoom.status = "in-progress";
         newRoom.universityId = universityId;
         newRoom.accountSid = accountId;
-        newRoom.statusCallback = webhookCallbackUrl;
+        newRoom.statusCallback = webhookRoomCallbackUrl;
         newRoom.minPrivilege = 10;
         newRoom.type = "group";
         newRoom.members = [];
@@ -146,6 +147,7 @@ exports.endClassroom = function(req, res) {
             twClient.rooms(roomId)
                 .update({ status: "completed" })
                 .then(room => {
+                    console.log(room)
                     Classroom.findOneAndUpdate({ roomSID: roomId }, { $set: { status: "completed", members: [] } }, function(err, data) {
                         if (err)
                             return res.json({ success: false, status: 500, err: err });
@@ -177,7 +179,6 @@ exports.joinClassroom = function(req, res) {
                 return res.json({ success: false, status: 403, err: "Room is completed!" });
             let classroom = data;
             classroom.members = lodash.union([accountId], classroom.members);
-            console.log(classroom)
             classroom.save(function(err, doc) {
                 if (err)
                     return res.json({ success: false, status: 500, err: err });
@@ -218,48 +219,77 @@ exports.leaveClassroom = function(req, res) {
     });
 }
 
-// stop recording
-exports.stopRecording = function(req, res) {
-    let classroomId = req.params.id;
-    twClient.rooms(classroomId)
-        .update({ recordParticipantsOnConnect: false })
-        .then(room => {
-            res.json({ success: true, status: 200 });
-        })
-        .catch(err => {
-            res.json({ success: false, status: 403, err: err });
-        })
-}
+// // stop recording
+// exports.stopRecording = function(req, res) {
+//     let recId = req.params.id;
+//     twClient.recordings(recId)
+//         .update({ status: 'completed' })
+//         .then(recording => {
+//             res.json({ success: true, status: 200 });
+//         })
+//         .catch(err => {
+//             res.json({ success: false, status: 403, err: err });
+//         })
+// }
 
-// start recording
-exports.startRecording = function(req, res) {
-    let classroomId = req.params.id;
-    twClient.rooms(classroomId)
-        .update({ recordParticipantsOnConnect: true })
-        .then(room => {
-            res.json({ success: true, status: 200 });
+// // start recording
+// exports.startRecording = function(req, res) {
+//     let recId = req.params.id;
+//     twClient.recordings(recId)
+//         .update({ status: 'processing' })
+//         .then(recording => {
+//             res.json({ success: true, status: 200 });
+//         })
+//         .catch(err => {
+//             res.json({ success: false, status: 403, err: err });
+//         })
+// }
+
+// // get all participants by roomid
+// exports.getAllParticipantByRoomId = function(req, res) {
+//     let roomId = req.params.id;
+//     twClient.rooms(roomId)
+//         .participants.get('antman')
+//         .fetch()
+//         .then(participant => {
+//             console.log(participant);
+//             res.json({ success: true, status: 200 });
+//         }).catch(message => {
+//             return { message: message }
+//         })
+// }
+
+// get recording by participants Id
+exports.getAllRecordingsByPId = function(req, res) {
+    pId = req.params.pid;
+    twClient.recordings.list({ groupingSid: [pId], limit: 20 })
+        .then(recordings => {
+            console.log(recordings);
+            return res.json({ success: true, status: 200, data: recordings });
         })
         .catch(err => {
-            res.json({ success: false, status: 403, err: err });
+            console.log(err)
+            return res.json({ success: false, status: 400, err: message })
         })
 }
 
 // get the composition complete recording in a grid
-exports.createCompositionRecording = function(req, res) {
+exports.createCompositionOfRecording = function(req, res) {
     const Twilio = require('twilio');
     const client = new Twilio(twilioApiKey, twilioApiSecret, { accountSid: accountSid });
     let classroomId = req.params.id;
+    let participantId = req.params.pid;
 
     client.video.compositions.
     create({
             roomSid: classroomId,
             audioSources: '*',
             videoLayout: {
-                grid: {
-                    video_sources: ['*']
+                single: {
+                    video_sources: [participantId]
                 }
             },
-            statusCallback: webhookCallbackUrl,
+            statusCallback: webhookCompositionCallbackUrl,
             format: 'mp4'
         })
         .then(composition => {
@@ -272,7 +302,7 @@ exports.createCompositionRecording = function(req, res) {
         });
 }
 
-// getting files 
+// getting composed media
 exports.getComposedMedia = function(req, res) {
     const Twilio = require('twilio');
     const client = new Twilio(twilioApiKey, twilioApiSecret, { accountSid: accountSid });
@@ -284,14 +314,8 @@ exports.getComposedMedia = function(req, res) {
         })
         .then(response => {
             const mediaLocation = JSON.parse(response.body).redirect_to;
-            console.log(response)
-            return res.json({ success: true, status: 200 });
-
-            // var file = fs.createWriteStream('myFile.mp4'); 
-            // var r = request(mediaLocation)
-            // r.on('response', (res) => {
-            //     res.pipe(file)
-            // });
+            console.log(mediaLocation)
+            return res.json({ success: true, status: 200, location: mediaLocation });
         })
         .catch(error => {
             console.log("Error" + error);
@@ -299,52 +323,87 @@ exports.getComposedMedia = function(req, res) {
         });
 }
 
-// the call back for the room event
+
+// callbacks for the room event
 exports.roomCallback = function(req, res) {
-    if (req.body.statusCallbackEvent != undefined) {
-        if (req.body.statusCallbackEvent == "room-ended") { // room-ended callback
-            let roomSid = req.body.roomSid;
-            Classroom.findOne({ roomSID: roomSid }, function(err, data) {});
+    console.log(req.body)
+    if (req.body.StatusCallbackEvent != undefined) {
+        if (req.body.StatusCallbackEvent == "room-ended") { // room-ended callback
+            console.log("room ended")
         }
-        if (req.body.statusCallbackEvent == "room-created") { // room-created callback
-            let roomSid = req.body.roomSid;
-            Classroom.findOne({ roomSID: roomSid }, function(err, data) {});
+        if (req.body.StatusCallbackEvent == "room-created") { // room-created callback
+            console.log("room created")
         }
-        if (req.body.statusCallbackEvent == "participant-connected") { // participant-connected callback
-            let roomSid = req.body.roomSid;
-            Classroom.findOne({ roomSID: roomSid }, function(err, data) {});
+        if (req.body.StatusCallbackEvent == "participant-connected") { // participant-connected callback
+            console.log("participant-connected")
         }
-        if (req.body.statusCallbackEvent == "participant-disconnected") { // participant-disconnected callback
-            let roomSid = req.body.roomSid;
-            Classroom.findOne({ roomSID: roomSid }, function(err, data) {});
+        if (req.body.StatusCallbackEvent == "participant-disconnected") { // participant-disconnected callback
+            console.log("participant-disconnected")
         }
-        if (req.body.statusCallbackEvent == "track-added") { // track-added callback
-            let roomSid = req.body.roomSid;
-            Classroom.findOne({ roomSID: roomSid }, function(err, data) {});
+        if (req.body.StatusCallbackEvent == "track-added") { // track-added callback
+            console.log("track-added")
         }
-        if (req.body.statusCallbackEvent == "track-removed") { // track-removed callback
-            let roomSid = req.body.roomSid;
-            Classroom.findOne({ roomSID: roomSid }, function(err, data) {});
+        if (req.body.StatusCallbackEvent == "track-removed") { // track-removed callback
+            console.log("track-removed")
         }
-        if (req.body.statusCallbackEvent == "track-enabled") { // track-enabled callback
-            let roomSid = req.body.roomSid;
-            Classroom.findOne({ roomSID: roomSid }, function(err, data) {});
+        if (req.body.StatusCallbackEvent == "track-enabled") { // track-enabled callback
+            console.log("track-enabled")
         }
-        if (req.body.statusCallbackEvent == "track-disabled") { // track-disabled callback
-            let roomSid = req.body.roomSid;
-            Classroom.findOne({ roomSID: roomSid }, function(err, data) {});
+        if (req.body.StatusCallbackEvent == "track-disabled") { // track-disabled callback                               
+            console.log("track-disabled")
         }
-        if (req.body.statusCallbackEvent == "recording-started") { // recording-started callback
-            let roomSid = req.body.roomSid;
-            Classroom.findOne({ roomSID: roomSid }, function(err, data) {});
+        if (req.body.StatusCallbackEvent == "recording-started") { // recording-started callback
+            console.log("recording-started")
+            twClient.compositions.
+            create({
+                    roomSid: req.body.RoomSid,
+                    audioSources: '*',
+                    videoLayout: {
+                        single: {
+                            video_sources: [req.body.ParticipantSid]
+                        }
+                    },
+                    statusCallback: webhookCompositionCallbackUrl,
+                    format: 'mp4'
+                })
+                .then(composition => {
+                    console.log('Created Composition with SID=' + composition.sid);
+                })
+                .catch(message => { console.log(message) })
         }
-        if (req.body.statusCallbackEvent == "recording-completed") { // recording-completed callback
-            let roomSid = req.body.roomSid;
-            Classroom.findOne({ roomSID: roomSid }, function(err, data) {});
+        if (req.body.StatusCallbackEvent == "recording-completed") { // recording-completed callback
+            console.log("recording-completed")
         }
-        if (req.body.statusCallbackEvent == "recording-failed") { // recording-failed callback
-            let roomSid = req.body.roomSid;
-            Classroom.findOne({ roomSID: roomSid }, function(err, data) {});
+        if (req.body.StatusCallbackEvent == "recording-failed") { // recording-failed callback
+            console.log("recording-failed")
+        }
+        return res.json({ success: true });
+    } else {
+        return res.json({ success: false });
+    }
+}
+
+// the call back for the composition event
+exports.compositionCallback = function(req, res) {
+    console.log(req.body)
+    if (req.body.StatusCallbackEvent != undefined) {
+        if (req.body.StatusCallbackEvent == "composition-enqueued") { // composition-enqueued callback
+
+        }
+        if (req.body.StatusCallbackEvent == "composition-hook-failed") { // composition-hook-failed callback
+
+        }
+        if (req.body.StatusCallbackEvent == "composition-started") { // composition-started callback
+
+        }
+        if (req.body.StatusCallbackEvent == "composition-available") { // composition-available callback
+
+        }
+        if (req.body.StatusCallbackEvent == "composition-progress") { // composition-progress callback
+
+        }
+        if (req.body.StatusCallbackEvent == "composition-failed") { // composition-failed callback
+
         }
     }
     return res.json({ success: true });

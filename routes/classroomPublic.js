@@ -37,6 +37,8 @@ var classroom_controller = require('../controllers/classroom.js');
  * @apiError {Number} status Status code.
  */
 
+
+/***  ROOM  ***/
 router.get('/all', classroom_controller.getAllClassrooms);
 
 // id: universityId, name: rooms' name
@@ -54,20 +56,27 @@ router.post('/classroom/:id/end', classroom_controller.endClassroom);
 // id: universityId
 router.get('/university/:id/all', classroom_controller.getAllClassroomsByUniversity);
 
-// name: room's unique name
-router.get('/classroom/:roomName/token', classroom_controller.generateAccessToken);
+/***  PARTICIPANTS  ***/
+// router.get('/classroom/:id/participants', classroom_controller.getAllParticipantByRoomId);
+
+/***  RECORDINGS  ***/
+// pid: participants id
+router.get('/participant/:pid/rec', classroom_controller.getAllRecordingsByPId);
 
 // id: room sid
-router.post('/classroom/:id/rec', classroom_controller.createCompositionRecording);
+router.get('/classroom/:id/participant/:pid/cmp', classroom_controller.createCompositionOfRecording);
 
 // id: composition id
 router.get('/composition/:id/', classroom_controller.getComposedMedia);
 
 
-// id: classroom id
-router.post('/classroom/:id/stop', classroom_controller.stopRecording);
+// // id: classroom id
+// router.post('/classroom/:id/stop', classroom_controller.stopRecording);
 
-// id: classroom id
-router.post('/classroom/:id/start', classroom_controller.startRecording);
+// // id: classroom id
+// router.post('/classroom/:id/start', classroom_controller.startRecording);
+
+// name: room's unique name
+router.get('/classroom/:roomName/token', classroom_controller.generateAccessToken);
 
 module.exports = router;
