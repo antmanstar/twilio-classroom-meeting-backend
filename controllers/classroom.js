@@ -84,8 +84,8 @@ exports.createUniversityClassroom = function(req, res) {
     let universityId = req.body.id;
     let uniqueName = req.body.roomName
     let privilege = req.body.privilege;
-    return res.json({ data: { privilege: privilege, id: universityId, uniqueName: uniqueName } });
-    if (parseInt(privilege) >= 99) {
+
+    if (privilege >= 99) {
         let newRoom = new Classroom();
         newRoom.recordParticipantsOnConnect = true;
         newRoom.uniqueName = uniqueName;
@@ -119,7 +119,7 @@ exports.createUniversityClassroom = function(req, res) {
                 res.json({ success: false, status: 400, err: message })
             });
     } else
-        return res.json({ success: false, status: 403, data: { privilege: privilege, id: universityId, uniqueName: uniqueName }, msg: "Insufficient Privilege" });
+        return res.json({ success: false, status: 403, msg: "Insufficient Privilege" });
 }
 
 // get all the classrooms by room creater and university id.
