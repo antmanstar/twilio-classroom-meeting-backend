@@ -85,7 +85,7 @@ exports.createUniversityClassroom = function(req, res) {
     let uniqueName = req.body.roomName
     let privilege = req.body.privilege;
 
-    if (privilege >= 99) {
+    if (parseInt(privilege) >= 99) {
         let newRoom = new Classroom();
         newRoom.recordParticipantsOnConnect = true;
         newRoom.uniqueName = uniqueName;
