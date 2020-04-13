@@ -14,8 +14,8 @@ let SDK = require('../lib/sdkconfig.js');
 let university = SDK.university;
 let emails = SDK.emails;
 
-const webhookRoomCallbackUrl = "http://1a03397d.ngrok.io/classroom/classroom/webhook/roomCallback";
-const webhookCompositionCallbackUrl = "http://1a03397d.ngrok.io/classroom/classroom/webhook/compositionCallback"
+const webhookRoomCallbackUrl = "http://8baf0adf.ngrok.io/classroom/classroom/webhook/roomCallback";
+const webhookCompositionCallbackUrl = "http://8baf0adf.ngrok.io/classroom/classroom/webhook/compositionCallback"
 
 const accountSid = twilioOptions.TWILIO_ACCOUNT_SID;
 const authToken = twilioOptions.TWILIO_ACCOUNT_AUTH_TOKEN;
@@ -27,24 +27,24 @@ const AccessToken = require('twilio').jwt.AccessToken;
 
 let twClient = tw.video;
 
-exports.createHiddenUniversity = function(req, res) {
-    let payload = {
-        name: req.body.name,
-        url: req.body.url,
-        token: req.body.token,
-        ownerId: req.body.ownerId,
-        language: req.body.language
-    };
+// exports.createHiddenUniversity = function(req, res) {
+//     let payload = {
+//         name: req.body.name,
+//         url: req.body.url,
+//         token: req.body.token,
+//         ownerId: req.body.ownerId,
+//         language: req.body.language
+//     };
 
-    university.createHiddenUniversity(payload).then(function(response) {
-            console.log(response)
-            return res.json({ success: true, data: response, status: 200 });
-        })
-        .catch(function(err) {
-            console.log(err)
-            return res.json({ success: false, err: err, status: 404 });
-        });
-}
+//     university.createHiddenUniversity(payload).then(function(response) {
+//             console.log(response)
+//             return res.json({ success: true, data: response, status: 200 });
+//         })
+//         .catch(function(err) {
+//             console.log(err)
+//             return res.json({ success: false, err: err, status: 404 });
+//         });
+// }
 
 // get all the classrooms over all the universities
 exports.getAllClassrooms = function(req, res) {
@@ -80,14 +80,10 @@ exports.getAllClassroomsByUniversity = function(req, res) {
 
 // create the classroom
 exports.createUniversityClassroom = function(req, res) {
-    let universityId = req.params.id;
     let accountId = req.account._id;
-    // let uniqueName = req.params.name
-    let uniqueName = req.params.roomName
-        // let privilege = req.body.privilege;
-    let privilege = 100;
-    // let token = req.body.token;
-    // let payload = { universityId: universityId, privilege: privilege, token: req.body.token };
+    let universityId = req.body.id;
+    let uniqueName = req.body.roomName
+    let privilege = req.body.privilege;
 
     if (privilege >= 99) {
         let newRoom = new Classroom();
@@ -97,7 +93,7 @@ exports.createUniversityClassroom = function(req, res) {
         newRoom.universityId = universityId;
         newRoom.accountSid = accountId;
         newRoom.statusCallback = webhookRoomCallbackUrl;
-        newRoom.minPrivilege = 10;
+        newRoom.minPrivilege = 0;
         newRoom.type = "group";
         newRoom.members = [];
 
@@ -123,7 +119,7 @@ exports.createUniversityClassroom = function(req, res) {
                 res.json({ success: false, status: 400, err: message })
             });
     } else
-        return res.json({ success: false, status: 403, err: "Insufficient Privilege" });
+        return res.json({ success: false, status: 403, msg: "Insufficient Privilege" });
 }
 
 // get all the classrooms by room creater and university id.
