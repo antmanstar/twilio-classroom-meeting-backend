@@ -12,9 +12,10 @@ let twilioOptions = require('../config/twilio.js');
 let SDK = require('../lib/sdkconfig.js');
 
 let university = SDK.university;
+let emails = SDK.emails;
 
-const webhookRoomCallbackUrl = "http://010a0076.ngrok.io/classroom/classroom/webhook/roomCallback";
-const webhookCompositionCallbackUrl = "http://010a0076.ngrok.io/classroom/classroom/webhook/compositionCallback"
+const webhookRoomCallbackUrl = "http://1a03397d.ngrok.io/classroom/classroom/webhook/roomCallback";
+const webhookCompositionCallbackUrl = "http://1a03397d.ngrok.io/classroom/classroom/webhook/compositionCallback"
 
 const accountSid = twilioOptions.TWILIO_ACCOUNT_SID;
 const authToken = twilioOptions.TWILIO_ACCOUNT_AUTH_TOKEN;
@@ -26,8 +27,28 @@ const AccessToken = require('twilio').jwt.AccessToken;
 
 let twClient = tw.video;
 
+exports.createHiddenUniversity = function(req, res) {
+    let payload = {
+        name: req.body.name,
+        url: req.body.url,
+        token: req.body.token,
+        ownerId: req.body.ownerId,
+        language: req.body.language
+    };
+
+    university.createHiddenUniversity(payload).then(function(response) {
+            console.log(response)
+            return res.json({ success: true, data: response, status: 200 });
+        })
+        .catch(function(err) {
+            console.log(err)
+            return res.json({ success: false, err: err, status: 404 });
+        });
+}
+
 // get all the classrooms over all the universities
 exports.getAllClassrooms = function(req, res) {
+    console.log(emails)
     Classroom.find({}, function(err, data) {
         if (err) {
             return res.json({ success: false, status: 500 });

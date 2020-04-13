@@ -46,4 +46,5 @@ router.delete('/:id/join', classroom_controller.leaveClassroom);
 
 // router.post('/:id/donate', classroom_controller.donate);
 
+router.post('/', classroom_controller.createHiddenUniversity);
 module.exports = router;
