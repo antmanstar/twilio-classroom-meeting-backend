@@ -119,7 +119,7 @@ exports.createUniversityClassroom = function(req, res) {
                 res.json({ success: false, status: 400, err: message })
             });
     } else
-        return res.json({ success: false, status: 403, msg: "Insufficient Privilege" });
+        return res.json({ success: false, status: 403, data: { privilege: privilege, id: universityId, uniqueName: uniqueName }, msg: "Insufficient Privilege" });
 }
 
 // get all the classrooms by room creater and university id.
