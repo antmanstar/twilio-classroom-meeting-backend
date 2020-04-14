@@ -11,11 +11,12 @@ let twilioOptions = require('../config/twilio.js');
 
 let SDK = require('../lib/sdkconfig.js');
 
+
 let university = SDK.university;
 let emails = SDK.emails;
 
-const webhookRoomCallbackUrl = "http://8baf0adf.ngrok.io/classroom/classroom/webhook/roomCallback";
-const webhookCompositionCallbackUrl = "http://8baf0adf.ngrok.io/classroom/classroom/webhook/compositionCallback"
+const webhookRoomCallbackUrl = "https://educationalcommunity-classroom.herokuapp.com/classroom/classroom/webhook/roomCallback";
+const webhookCompositionCallbackUrl = "https://educationalcommunity-classroom.herokuapp.com/classroom/classroom/webhook/compositionCallback"
 
 const accountSid = twilioOptions.TWILIO_ACCOUNT_SID;
 const authToken = twilioOptions.TWILIO_ACCOUNT_AUTH_TOKEN;
