@@ -59,6 +59,19 @@ exports.getAllClassrooms = function(req, res) {
     });
 }
 
+
+exports.delAllClassrooms = function(req, res) {
+    Classroom.remove({}, function(err, data) {
+        if (err) {
+            return res.json({ success: false, status: 500 });
+        } else if (data != undefined && data != null) {
+            return res.json({ success: true, data: data, status: 200 });
+        } else {
+            return res.json({ success: false, status: 404 });
+        }
+    });
+}
+
 // get all the classrooms in the university
 exports.getAllClassroomsByUniversity = function(req, res) {
     let universityId = req.params.id;
@@ -105,7 +118,7 @@ exports.createUniversityClassroom = function(req, res) {
                 newRoom.roomSID = room.sid;
                 newRoom.save(function(err, doc) {
                     if (err)
-                        return res.json({ success: false, status: 500, err: err });
+                        return res.json({ success: false, status: 500, msg: err });
                     else if (doc != undefined && doc != null)
                         return res.json({ success: true, status: 201, data: { id: doc._id, sid: room.sid } });
                     else
@@ -115,7 +128,7 @@ exports.createUniversityClassroom = function(req, res) {
             })
             .catch(message => {
                 console.log(message)
-                res.json({ success: false, status: 400, err: message })
+                res.json({ success: false, status: 400, msg: message })
             });
     } else
         return res.json({ success: false, status: 403, msg: "Insufficient Privilege" });

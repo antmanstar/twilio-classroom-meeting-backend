@@ -57,4 +57,6 @@ var classroom_controller = require('../controllers/classroom.js');
 /***  ROOM  ***/
 router.get('/all', classroom_controller.getAllClassrooms);
 
+router.delete('/all', classroom_controller.delAllClassrooms);
+
 module.exports = router;
