@@ -128,7 +128,7 @@ exports.createUniversityClassroom = function(req, res) {
             })
             .catch(message => {
                 console.log(message)
-                res.json({ success: false, status: 400, msg: message })
+                res.json({ success: false, status: 400, msg: message.Error })
             });
     } else
         return res.json({ success: false, status: 403, msg: "Insufficient Privilege" });
