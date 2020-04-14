@@ -48,7 +48,6 @@ let twClient = tw.video;
 
 // get all the classrooms over all the universities
 exports.getAllClassrooms = function(req, res) {
-    console.log(emails)
     Classroom.find({}, function(err, data) {
         if (err) {
             return res.json({ success: false, status: 500 });
@@ -153,34 +152,39 @@ exports.getClassroomByRoomId = function(req, res) {
 
 // A room creater end the classroom
 exports.endClassroom = function(req, res) {
-    let roomId = req.params.id;
+    let roomId = req.body.id;
+    let privilege = req.body.privilege;
 
-    Classroom.findOne({ roomSID: roomId }, function(err, data) {
-        if (err)
-            return res.json({ success: false, status: 500, err: err });
-        else if (data != undefined && data != null) {
-            if (data.status == "completed")
-                return res.json({ success: false, status: 403, err: "Room already completed!" });
-            twClient.rooms(roomId)
-                .update({ status: "completed" })
-                .then(room => {
-                    console.log(room)
-                    Classroom.findOneAndUpdate({ roomSID: roomId }, { $set: { status: "completed", members: [] } }, function(err, data) {
-                        if (err)
-                            return res.json({ success: false, status: 500, err: err });
-                        else if (data != undefined && data != null) {
-                            return res.json({ success: true, status: 200, data: data });
-                        } else
-                            return res.json({ success: false, status: 404 });
+    if (privilege >= 99) {
+        Classroom.findOne({ roomSID: roomId }, function(err, data) {
+            if (err)
+                return res.json({ success: false, status: 500, err: err });
+            else if (data != undefined && data != null) {
+                if (data.status == "completed")
+                    return res.json({ success: false, status: 403, msg: "Room already completed!" });
+                twClient.rooms(roomId)
+                    .update({ status: "completed" })
+                    .then(room => {
+                        console.log(room)
+                        Classroom.findOneAndRemove({ roomSID: roomId }, function(err, data) {
+                            if (err)
+                                return res.json({ success: false, status: 500, err: err });
+                            else if (data != undefined && data != null) {
+                                return res.json({ success: true, status: 200, msg: "Successfully deleted" });
+                            } else
+                                return res.json({ success: false, status: 404 });
+                        });
+                    })
+                    .catch(message => {
+                        console.log(message)
+                        res.json({ success: false, status: 400, err: message })
                     });
-                })
-                .catch(message => {
-                    console.log(message)
-                    res.json({ success: false, status: 400, err: message })
-                });
-        } else
-            return res.json({ success: false, status: 404 });
-    });
+            } else
+                return res.json({ success: false, status: 404 });
+        });
+    } else {
+        return res.json({ success: false, status: 403, msg: "You are not a Administrator" });
+    }
 }
 
 // A participant joins to the room
