@@ -49,7 +49,7 @@ router.post('/:id/join', classroom_controller.joinClassroom);
 router.delete('/:id/join', classroom_controller.leaveClassroom);
 
 // id: room sid
-router.delete('/end', classroom_controller.endClassroom);
+router.post('/end', classroom_controller.endClassroom);
 
 // id: universityId
 router.get('/university/:id/all', classroom_controller.getAllClassroomsByUniversity);
