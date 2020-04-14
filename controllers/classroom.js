@@ -26,6 +26,9 @@ const tw = require('twilio')(accountSid, authToken);
 const AccessToken = require('twilio').jwt.AccessToken;
 
 let twClient = tw.video;
+let twErrorDic = {
+    53113: "Room Exists!",
+}
 
 // exports.createHiddenUniversity = function(req, res) {
 //     let payload = {
@@ -58,7 +61,6 @@ exports.getAllClassrooms = function(req, res) {
         }
     });
 }
-
 
 exports.delAllClassrooms = function(req, res) {
     Classroom.remove({}, function(err, data) {
@@ -128,7 +130,7 @@ exports.createUniversityClassroom = function(req, res) {
             })
             .catch(message => {
                 console.log(message)
-                res.json({ success: false, status: 400, msg: message.Error })
+                res.json({ success: false, status: 400, msg: twErrorDic[message.code] })
             });
     } else
         return res.json({ success: false, status: 403, msg: "Insufficient Privilege" });
