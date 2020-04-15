@@ -1,46 +1,213 @@
 var router = require('../lib/privateRouter');
 
 var classroom_controller = require('../controllers/classroom.js');
+
 /**
-  Get all channels
+  Get Classrooms
 **/
 
 /**
- * @api {get} /university/:id Get University Channels
- * @apiName getUniversityChannels
- * @apiGroup Channel
+ * @api {GET} /university/:id Get classrooms created by self at the given university
+ * @apiName getClassroomsByAdmin
+ * @apiGroup Classroom
  *
  * @apiParam {Number} :id University id.
  *
- *
- * @apiSuccess {Boolean} success Indicates if request was sucessful or not.
- * @apiSuccess {JSON} data  Channel list.
- * @apiSuccess {Number} status Status code.
- *
+ * @apiSuccess {json} classroom array
  * @apiSuccessExample {json} Success-Response:
  *     HTTP/1.1 200 OK
  *     {
- *       "success": true,
- *       "data": [{"channelId": "532",
- *		"title": "General Channel",
- *		"universityId": "d35",
- *		"members": [35, 43]
- *		}],
- *	"status": 03
+ *        "success": true,
+ *        "data": [
+ *          {
+ *             "members": [],
+ *             "_id": "xxxxxxxxxxxxxx",
+ *             "questions": [],
+ *             "donations": [],
+ *             "privateMeetings": [],
+ *             "recordParticipantsOnConnect": true,
+ *             "uniqueName": "test_classroom",
+ *             "status": "in-progress",
+ *             "universityId": "xxxxxxxxxxxxxx",
+ *             "accountSid": "xxxxxxxxxxxxxx",
+ *             "statusCallback": "https://educationalcommunity-classroom.herokuapp.com/classroom/classroom/webhook/roomCallback",
+ *             "minPrivilege": 0,
+ *             "type": "group",
+ *             "roomSID": "RMxxxxxxxxxxxxxx",
+ *             "__v": 0
+ *          }
+ *        ],
+ *        "status": 200
  *     }
  *
  * @apiError {Boolean} success Indicates if request was sucessful or not.
  * @apiError {Number} status Status code.
+ * @apiError {String} error message
+ * @apiErrorExample {json} Failed-Response
+ *    {
+ *       "success": false,
+ *       "status": 400,
+ *       "msg": "Not Found"
+ *    }  
  */
-
-// id: universityId, name: rooms' name
-router.post('/university', classroom_controller.createUniversityClassroom);
-
-// id: universityId
 router.get('/university/:id', classroom_controller.getClassroomsByAdmin);
 
-// id: room sid
+
+/**
+  Get the Classroom
+**/
+
+/**
+ * @api {GET} /classroom/:id Get the classroom given by classroom id
+ * @apiName getClassroomByRoomId
+ * @apiGroup Classroom
+ *
+ * @apiParam {Number} :id classroom sid.
+ *
+ * @apiSuccess {json} classroom 
+ * @apiSuccessExample {json} Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *        "success": true,
+ *        "data": {
+ *             "members": [],
+ *             "_id": "xxxxxxxxxxxxxx",
+ *             "questions": [],
+ *             "donations": [],
+ *             "privateMeetings": [],
+ *             "recordParticipantsOnConnect": true,
+ *             "uniqueName": "test_classroom",
+ *             "status": "in-progress",
+ *             "universityId": "xxxxxxxxxxxxxx",
+ *             "accountSid": "xxxxxxxxxxxxxx",
+ *             "statusCallback": "https://educationalcommunity-classroom.herokuapp.com/classroom/classroom/webhook/roomCallback",
+ *             "minPrivilege": 0,
+ *             "type": "group",
+ *             "roomSID": "RMxxxxxxxxxxxxxx",
+ *             "__v": 0
+ *          }
+ *        "status": 200
+ *     }
+ *
+ * @apiError {Boolean} success Indicates if request was sucessful or not.
+ * @apiError {Number} status Status code.
+ * @apiError {String} error message
+ * @apiErrorExample {json} Failed-Response
+ *    {
+ *       "success": false,
+ *       "status": 400,
+ *       "msg": "Not Found"
+ *    }  
+ */
 router.get('/classroom/:id', classroom_controller.getClassroomByRoomId);
+
+
+/**
+  Get Classrooms
+**/
+
+/**
+ * @api {GET} /university/:id Get all classrooms at the given university by university id
+ * @apiName getAllClassroomsByUniversity
+ * @apiGroup Classroom
+ *
+ * @apiParam {Number} :id University id.
+ *
+ * @apiSuccess {json} Classroom Array
+ * @apiSuccessExample {json} Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *        "success": true,
+ *        "data": [
+ *          {
+ *             "members": [],
+ *             "_id": "xxxxxxxxxxxxxx",
+ *             "questions": [],
+ *             "donations": [],
+ *             "privateMeetings": [],
+ *             "recordParticipantsOnConnect": true,
+ *             "uniqueName": "test_classroom",
+ *             "status": "in-progress",
+ *             "universityId": "xxxxxxxxxxxxxx",
+ *             "accountSid": "xxxxxxxxxxxxxx",
+ *             "statusCallback": "https://educationalcommunity-classroom.herokuapp.com/classroom/classroom/webhook/roomCallback",
+ *             "minPrivilege": 0,
+ *             "type": "group",
+ *             "roomSID": "RMxxxxxxxxxxxxxx",
+ *             "__v": 0
+ *          }
+ *        ],
+ *        "status": 200
+ *     }
+ *
+ * @apiError {Boolean} success Indicates if request was sucessful or not.
+ * @apiError {Number} status Status code.
+ * @apiError {String} error message
+ * @apiErrorExample {json} Failed-Response
+ *    {
+ *       "success": false,
+ *       "status": 400,
+ *       "msg": "Not Found"
+ *    }  
+ */
+router.get('/university/:id/all', classroom_controller.getAllClassroomsByUniversity);
+
+
+/**
+  Create Classroom
+**/
+
+/**
+ * @api {POST} /university Create the university by university id, unique name, privilege
+ * @apiName createUniversityClassroom
+ * @apiGroup Classroom
+ *
+ * @apiParam {Number} :id University id.
+ * @apiParam {String} :roomName Calssroom Unique Name.
+ * @apiParam {Number} :privilege User Account Privilege.
+ *
+ * @apiSuccess {json} Classroom 
+ * @apiSuccessExample {json} Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *        "success": true,
+ *        "data": {
+ *             "members": [],
+ *             "_id": "xxxxxxxxxxxxxx",
+ *             "questions": [],
+ *             "donations": [],
+ *             "privateMeetings": [],
+ *             "recordParticipantsOnConnect": true,
+ *             "uniqueName": "test_classroom",
+ *             "status": "in-progress",
+ *             "universityId": "xxxxxxxxxxxxxx",
+ *             "accountSid": "xxxxxxxxxxxxxx",
+ *             "statusCallback": "https://educationalcommunity-classroom.herokuapp.com/classroom/classroom/webhook/roomCallback",
+ *             "minPrivilege": 0,
+ *             "type": "group",
+ *             "roomSID": "RMxxxxxxxxxxxxxx",
+ *             "__v": 0
+ *          }
+ *        "status": 200
+ *     }
+ *
+ * @apiError {Boolean} success Indicates if request was sucessful or not.
+ * @apiError {Number} status Status code.
+ * @apiError {String} error message
+ * @apiErrorExample {json} Failed-Response
+ *    {
+ *       "success": false,
+ *       "status": 403,
+ *       "msg": "Insufficient Privilege"
+ *    }  
+ * @apiErrorExample {json} Failed-Response
+ *    {
+ *       "success": false,
+ *       "status": 400,
+ *       "msg": "Room Exist!"
+ *    } 
+ */
+router.post('/university', classroom_controller.createUniversityClassroom);
 
 // id: room sid
 router.post('/:id/join', classroom_controller.joinClassroom);
@@ -49,10 +216,7 @@ router.post('/:id/join', classroom_controller.joinClassroom);
 router.delete('/:id/join', classroom_controller.leaveClassroom);
 
 // id: room sid
-router.post('/classroom/:id/end', classroom_controller.endClassroom);
-
-// id: universityId
-router.get('/university/:id/all', classroom_controller.getAllClassroomsByUniversity);
+router.delete('/end', classroom_controller.endClassroom);
 
 /***  RECORDINGS  ***/
 // pid: participants id
@@ -66,5 +230,7 @@ router.get('/composition/:id/', classroom_controller.getComposedMedia);
 
 // name: room's unique name
 router.get('/classroom/:roomName/token', classroom_controller.generateAccessToken);
+
+router.delete('/universtiy/:id/all', classroom_controller.delAllClassroomsByUniversity);
 
 module.exports = router;

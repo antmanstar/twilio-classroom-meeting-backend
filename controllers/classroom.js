@@ -1,7 +1,7 @@
 let mongoose = require('mongoose');
 let jwt = require('jsonwebtoken');
 let Classroom = require('../models/Classroom.js');
-let Donation = require('../models/Donation.js');
+// let Donation = require('../models/Donation.js');
 
 let bcrypt = require('bcryptjs');
 let lodash = require('lodash');
@@ -14,8 +14,8 @@ let SDK = require('../lib/sdkconfig.js');
 let university = SDK.university;
 let emails = SDK.emails;
 
-const webhookRoomCallbackUrl = "http://8baf0adf.ngrok.io/classroom/classroom/webhook/roomCallback";
-const webhookCompositionCallbackUrl = "http://8baf0adf.ngrok.io/classroom/classroom/webhook/compositionCallback"
+const webhookRoomCallbackUrl = "http://c395e03d.ngrok.io/classroom/classroom/webhook/roomCallback";
+const webhookCompositionCallbackUrl = "http://c395e03d.ngrok.io/classroom/classroom/webhook/compositionCallback"
 
 const accountSid = twilioOptions.TWILIO_ACCOUNT_SID;
 const authToken = twilioOptions.TWILIO_ACCOUNT_AUTH_TOKEN;
@@ -26,29 +26,12 @@ const tw = require('twilio')(accountSid, authToken);
 const AccessToken = require('twilio').jwt.AccessToken;
 
 let twClient = tw.video;
-
-// exports.createHiddenUniversity = function(req, res) {
-//     let payload = {
-//         name: req.body.name,
-//         url: req.body.url,
-//         token: req.body.token,
-//         ownerId: req.body.ownerId,
-//         language: req.body.language
-//     };
-
-//     university.createHiddenUniversity(payload).then(function(response) {
-//             console.log(response)
-//             return res.json({ success: true, data: response, status: 200 });
-//         })
-//         .catch(function(err) {
-//             console.log(err)
-//             return res.json({ success: false, err: err, status: 404 });
-//         });
-// }
+let twErrorDic = {
+    53113: "Room Exists!",
+}
 
 // get all the classrooms over all the universities
 exports.getAllClassrooms = function(req, res) {
-    console.log(emails)
     Classroom.find({}, function(err, data) {
         if (err) {
             return res.json({ success: false, status: 500 });
@@ -60,11 +43,23 @@ exports.getAllClassrooms = function(req, res) {
     });
 }
 
-// get all the classrooms in the university
-exports.getAllClassroomsByUniversity = function(req, res) {
+exports.delAllClassrooms = function(req, res) {
+    Classroom.remove({}, function(err, data) {
+        if (err) {
+            return res.json({ success: false, status: 500 });
+        } else if (data != undefined && data != null) {
+            return res.json({ success: true, data: data, status: 200 });
+        } else {
+            return res.json({ success: false, status: 404 });
+        }
+    });
+}
+
+// delete all the univeristies in the given university
+exports.delAllClassroomsByUniversity = function(req, res) {
     let universityId = req.params.id;
     if (universityId != undefined && universityId != null) {
-        Classroom.find({ universityId: universityId }, function(err, data) {
+        Classroom.remove({ universityId: universityId }, function(err, data) {
             if (err) {
                 return res.json({ success: false, status: 500 });
             } else if (data != undefined && data != null) {
@@ -75,6 +70,24 @@ exports.getAllClassroomsByUniversity = function(req, res) {
         });
     } else {
         return res.json({ success: false, status: 400 })
+    }
+}
+
+// get all the classrooms in the university
+exports.getAllClassroomsByUniversity = function(req, res) {
+    let universityId = req.params.id;
+    if (universityId != undefined && universityId != null) {
+        Classroom.find({ universityId: universityId }, function(err, data) {
+            if (err) {
+                return res.json({ success: false, status: 500, msg: "DB error" });
+            } else if (data != undefined && data != null) {
+                return res.json({ success: true, data: data, status: 200 });
+            } else {
+                return res.json({ success: false, status: 404, msg: "Not Found" });
+            }
+        });
+    } else {
+        return res.json({ success: false, status: 400, msg: "University ID undefiend." })
     }
 }
 
@@ -106,7 +119,7 @@ exports.createUniversityClassroom = function(req, res) {
                 newRoom.roomSID = room.sid;
                 newRoom.save(function(err, doc) {
                     if (err)
-                        return res.json({ success: false, status: 500, err: err });
+                        return res.json({ success: false, status: 500, msg: err });
                     else if (doc != undefined && doc != null)
                         return res.json({ success: true, status: 201, data: { id: doc._id, sid: room.sid } });
                     else
@@ -116,7 +129,7 @@ exports.createUniversityClassroom = function(req, res) {
             })
             .catch(message => {
                 console.log(message)
-                res.json({ success: false, status: 400, err: message })
+                res.json({ success: false, status: 400, msg: twErrorDic[message.code] })
             });
     } else
         return res.json({ success: false, status: 403, msg: "Insufficient Privilege" });
@@ -129,11 +142,11 @@ exports.getClassroomsByAdmin = function(req, res) {
 
     Classroom.find({ accountSid: accountId, universityId: universityId }, function(err, data) {
         if (err)
-            return res.json({ success: false, status: 500, err: err });
+            return res.json({ success: false, status: 500, msg: "DB error" });
         else if (data != undefined && data != null)
             return res.json({ success: true, status: 200, data: data });
         else
-            return res.json({ success: false, status: 404 });
+            return res.json({ success: false, status: 404, msg: "Not Found" });
     });
 }
 
@@ -143,44 +156,49 @@ exports.getClassroomByRoomId = function(req, res) {
 
     Classroom.findOne({ roomSID: roomId }, function(err, data) {
         if (err)
-            return res.json({ success: false, status: 500, err: err });
+            return res.json({ success: false, status: 500, err: "DB error" });
         else if (data != undefined && data != null)
             return res.json({ success: true, status: 200, data: data });
         else
-            return res.json({ success: false, status: 404 });
+            return res.json({ success: false, status: 404, msg: "Not Found" });
     });
 }
 
 // A room creater end the classroom
 exports.endClassroom = function(req, res) {
-    let roomId = req.params.id;
+    let roomId = req.body.id;
+    let privilege = req.body.privilege;
 
-    Classroom.findOne({ roomSID: roomId }, function(err, data) {
-        if (err)
-            return res.json({ success: false, status: 500, err: err });
-        else if (data != undefined && data != null) {
-            if (data.status == "completed")
-                return res.json({ success: false, status: 403, err: "Room already completed!" });
-            twClient.rooms(roomId)
-                .update({ status: "completed" })
-                .then(room => {
-                    console.log(room)
-                    Classroom.findOneAndUpdate({ roomSID: roomId }, { $set: { status: "completed", members: [] } }, function(err, data) {
-                        if (err)
-                            return res.json({ success: false, status: 500, err: err });
-                        else if (data != undefined && data != null) {
-                            return res.json({ success: true, status: 200, data: data });
-                        } else
-                            return res.json({ success: false, status: 404 });
+    if (privilege >= 99) {
+        Classroom.findOne({ roomSID: roomId }, function(err, data) {
+            if (err)
+                return res.json({ success: false, status: 500, err: err });
+            else if (data != undefined && data != null) {
+                if (data.status == "completed")
+                    return res.json({ success: false, status: 403, msg: "Room already completed!" });
+                twClient.rooms(roomId)
+                    .update({ status: "completed" })
+                    .then(room => {
+                        console.log(room)
+                        Classroom.findOneAndRemove({ roomSID: roomId }, function(err, data) {
+                            if (err)
+                                return res.json({ success: false, status: 500, err: err });
+                            else if (data != undefined && data != null) {
+                                return res.json({ success: true, status: 200, msg: "Successfully deleted" });
+                            } else
+                                return res.json({ success: false, status: 404 });
+                        });
+                    })
+                    .catch(message => {
+                        console.log(message)
+                        res.json({ success: false, status: 400, err: message })
                     });
-                })
-                .catch(message => {
-                    console.log(message)
-                    res.json({ success: false, status: 400, err: message })
-                });
-        } else
-            return res.json({ success: false, status: 404 });
-    });
+            } else
+                return res.json({ success: false, status: 404 });
+        });
+    } else {
+        return res.json({ success: false, status: 403, msg: "You are not a Administrator" });
+    }
 }
 
 // A participant joins to the room
@@ -262,7 +280,7 @@ exports.leaveClassroom = function(req, res) {
 //         })
 // }
 
-// // get all participants by roomid
+//  get all participants by roomid
 // exports.getAllParticipantByRoomId = function(req, res) {
 //     let roomId = req.params.id;
 //     twClient.rooms(roomId)
@@ -347,6 +365,22 @@ exports.roomCallback = function(req, res) {
     if (req.body.StatusCallbackEvent != undefined) {
         if (req.body.StatusCallbackEvent == "room-ended") { // room-ended callback
             console.log("room ended")
+            twClient.compositions.
+            create({
+                    roomSid: req.body.RoomSid,
+                    audioSources: '*',
+                    videoLayout: {
+                        single: {
+                            video_sources: [req.body.ParticipantSid]
+                        }
+                    },
+                    statusCallback: webhookCompositionCallbackUrl,
+                    format: 'mp4'
+                })
+                .then(composition => {
+                    console.log('Created Composition with SID=' + composition.sid);
+                })
+                .catch(message => { console.log(message) })
         }
         if (req.body.StatusCallbackEvent == "room-created") { // room-created callback
             console.log("room created")
@@ -371,22 +405,6 @@ exports.roomCallback = function(req, res) {
         }
         if (req.body.StatusCallbackEvent == "recording-started") { // recording-started callback
             console.log("recording-started")
-            twClient.compositions.
-            create({
-                    roomSid: req.body.RoomSid,
-                    audioSources: '*',
-                    videoLayout: {
-                        single: {
-                            video_sources: [req.body.ParticipantSid]
-                        }
-                    },
-                    statusCallback: webhookCompositionCallbackUrl,
-                    format: 'mp4'
-                })
-                .then(composition => {
-                    console.log('Created Composition with SID=' + composition.sid);
-                })
-                .catch(message => { console.log(message) })
         }
         if (req.body.StatusCallbackEvent == "recording-completed") { // recording-completed callback
             console.log("recording-completed")
@@ -405,25 +423,25 @@ exports.compositionCallback = function(req, res) {
     console.log(req.body)
     if (req.body.StatusCallbackEvent != undefined) {
         if (req.body.StatusCallbackEvent == "composition-enqueued") { // composition-enqueued callback
-
         }
         if (req.body.StatusCallbackEvent == "composition-hook-failed") { // composition-hook-failed callback
-
         }
         if (req.body.StatusCallbackEvent == "composition-started") { // composition-started callback
-
+            console.log("composition-started")
         }
         if (req.body.StatusCallbackEvent == "composition-available") { // composition-available callback
-
+            return res.json({ mediaUri: "video.twilio.com" + req.body.CompositionUri + "/Media" });
         }
         if (req.body.StatusCallbackEvent == "composition-progress") { // composition-progress callback
-
+            console.log("composition-progress")
         }
         if (req.body.StatusCallbackEvent == "composition-failed") { // composition-failed callback
-
+            console.log("composition-failed")
         }
+        return res.json({ success: true });
+    } else {
+        return res.json({ success: false });
     }
-    return res.json({ success: true });
 }
 
 // generate token for the specified user and room
