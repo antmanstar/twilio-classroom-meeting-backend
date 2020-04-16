@@ -11,13 +11,32 @@ let bodyParser = require('body-parser');
 let cors = require('cors');
 
 /* Routes */
-let routesPublic = require('./routes/classroomPublic.js');
-let routesPrivate = require('./routes/classroomPrivate.js');
+let classroomPublic = require('./routes/classroomPublic.js');
+let classroomPrivate = require('./routes/classroomPrivate.js');
+let classroomWebhook = require('./routes/classroomWebhook.js');
+let chatPrivate = require('./routes/chatPrivate.js');
 
 /* CLI Arguments */
 let parseArgs = require('minimist')
 
-let port = process.env.PORT || 8080;
+/* Port */
+
+let port;
+
+if (process.env.NODE_ENV == 'dev' || true) {
+    var args = parseArgs(process.argv.slice(2), { port: 'port' });
+    if (args.port == undefined) {
+        throw new Error("To start microservice, must define PORT argument. --port <num>");
+    }
+    port = args.port;
+} else if (process.env.NODE_ENV == 'test' || process.env.NODE_ENV == 'acceptance') {
+    port = 8080;
+} else if (process.env.NODE_ENV == 'prod') {
+    require('newrelic');
+    port = 80;
+} else {
+    throw new Error("Set up development variable. 'dev', 'test', 'acceptance', 'prod'");
+}
 
 /* End CLI Arguments */
 
@@ -25,10 +44,10 @@ let port = process.env.PORT || 8080;
 let config = require('config');
 
 /* Database options */
-let options = { useMongoClient: true };
+let options = { useNewUrlParser: true, useUnifiedTopology: true };
 
 /* Database */
-mongoose.connect(config.DBHost, options);
+mongoose.connect(config.DBHost, options)
 let db = mongoose.connection;
 
 /* Mongoose fix depreciation promise */
@@ -54,8 +73,10 @@ app.use(cors());
 /* app.user custom modification */
 
 /* Accounts routes */
-app.use('/classroom', routesPublic);
-app.use('/classroom', routesPrivate);
+app.use('/classroom', classroomWebhook);
+app.use('/classroom', classroomPublic);
+app.use('/classroom', classroomPrivate);
+app.use('/classroom', chatPrivate);
 
 /* Start API */
 app.listen(port, function() {

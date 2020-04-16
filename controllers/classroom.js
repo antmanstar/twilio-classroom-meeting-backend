@@ -1,7 +1,7 @@
 let mongoose = require('mongoose');
 let jwt = require('jsonwebtoken');
 let Classroom = require('../models/Classroom.js');
-let Donation = require('../models/Donation.js');
+// let Donation = require('../models/Donation.js');
 
 let bcrypt = require('bcryptjs');
 let lodash = require('lodash');
@@ -11,12 +11,11 @@ let twilioOptions = require('../config/twilio.js');
 
 let SDK = require('../lib/sdkconfig.js');
 
-
 let university = SDK.university;
 let emails = SDK.emails;
 
-const webhookRoomCallbackUrl = "https://educationalcommunity-classroom.herokuapp.com/classroom/classroom/webhook/roomCallback";
-const webhookCompositionCallbackUrl = "https://educationalcommunity-classroom.herokuapp.com/classroom/classroom/webhook/compositionCallback"
+const webhookRoomCallbackUrl = "http://c395e03d.ngrok.io/classroom/classroom/webhook/roomCallback";
+const webhookCompositionCallbackUrl = "http://c395e03d.ngrok.io/classroom/classroom/webhook/compositionCallback"
 
 const accountSid = twilioOptions.TWILIO_ACCOUNT_SID;
 const authToken = twilioOptions.TWILIO_ACCOUNT_AUTH_TOKEN;
@@ -30,25 +29,6 @@ let twClient = tw.video;
 let twErrorDic = {
     53113: "Room Exists!",
 }
-
-// exports.createHiddenUniversity = function(req, res) {
-//     let payload = {
-//         name: req.body.name,
-//         url: req.body.url,
-//         token: req.body.token,
-//         ownerId: req.body.ownerId,
-//         language: req.body.language
-//     };
-
-//     university.createHiddenUniversity(payload).then(function(response) {
-//             console.log(response)
-//             return res.json({ success: true, data: response, status: 200 });
-//         })
-//         .catch(function(err) {
-//             console.log(err)
-//             return res.json({ success: false, err: err, status: 404 });
-//         });
-// }
 
 // get all the classrooms over all the universities
 exports.getAllClassrooms = function(req, res) {
@@ -75,11 +55,11 @@ exports.delAllClassrooms = function(req, res) {
     });
 }
 
-// get all the classrooms in the university
-exports.getAllClassroomsByUniversity = function(req, res) {
+// delete all the univeristies in the given university
+exports.delAllClassroomsByUniversity = function(req, res) {
     let universityId = req.params.id;
     if (universityId != undefined && universityId != null) {
-        Classroom.find({ universityId: universityId }, function(err, data) {
+        Classroom.remove({ universityId: universityId }, function(err, data) {
             if (err) {
                 return res.json({ success: false, status: 500 });
             } else if (data != undefined && data != null) {
@@ -90,6 +70,24 @@ exports.getAllClassroomsByUniversity = function(req, res) {
         });
     } else {
         return res.json({ success: false, status: 400 })
+    }
+}
+
+// get all the classrooms in the university
+exports.getAllClassroomsByUniversity = function(req, res) {
+    let universityId = req.params.id;
+    if (universityId != undefined && universityId != null) {
+        Classroom.find({ universityId: universityId }, function(err, data) {
+            if (err) {
+                return res.json({ success: false, status: 500, msg: "DB error" });
+            } else if (data != undefined && data != null) {
+                return res.json({ success: true, data: data, status: 200 });
+            } else {
+                return res.json({ success: false, status: 404, msg: "Not Found" });
+            }
+        });
+    } else {
+        return res.json({ success: false, status: 400, msg: "University ID undefiend." })
     }
 }
 
@@ -144,11 +142,11 @@ exports.getClassroomsByAdmin = function(req, res) {
 
     Classroom.find({ accountSid: accountId, universityId: universityId }, function(err, data) {
         if (err)
-            return res.json({ success: false, status: 500, err: err });
+            return res.json({ success: false, status: 500, msg: "DB error" });
         else if (data != undefined && data != null)
             return res.json({ success: true, status: 200, data: data });
         else
-            return res.json({ success: false, status: 404 });
+            return res.json({ success: false, status: 404, msg: "Not Found" });
     });
 }
 
@@ -158,11 +156,11 @@ exports.getClassroomByRoomId = function(req, res) {
 
     Classroom.findOne({ roomSID: roomId }, function(err, data) {
         if (err)
-            return res.json({ success: false, status: 500, err: err });
+            return res.json({ success: false, status: 500, err: "DB error" });
         else if (data != undefined && data != null)
             return res.json({ success: true, status: 200, data: data });
         else
-            return res.json({ success: false, status: 404 });
+            return res.json({ success: false, status: 404, msg: "Not Found" });
     });
 }
 
@@ -282,7 +280,7 @@ exports.leaveClassroom = function(req, res) {
 //         })
 // }
 
-// // get all participants by roomid
+//  get all participants by roomid
 // exports.getAllParticipantByRoomId = function(req, res) {
 //     let roomId = req.params.id;
 //     twClient.rooms(roomId)
@@ -367,6 +365,22 @@ exports.roomCallback = function(req, res) {
     if (req.body.StatusCallbackEvent != undefined) {
         if (req.body.StatusCallbackEvent == "room-ended") { // room-ended callback
             console.log("room ended")
+            twClient.compositions.
+            create({
+                    roomSid: req.body.RoomSid,
+                    audioSources: '*',
+                    videoLayout: {
+                        single: {
+                            video_sources: [req.body.ParticipantSid]
+                        }
+                    },
+                    statusCallback: webhookCompositionCallbackUrl,
+                    format: 'mp4'
+                })
+                .then(composition => {
+                    console.log('Created Composition with SID=' + composition.sid);
+                })
+                .catch(message => { console.log(message) })
         }
         if (req.body.StatusCallbackEvent == "room-created") { // room-created callback
             console.log("room created")
@@ -391,22 +405,6 @@ exports.roomCallback = function(req, res) {
         }
         if (req.body.StatusCallbackEvent == "recording-started") { // recording-started callback
             console.log("recording-started")
-            twClient.compositions.
-            create({
-                    roomSid: req.body.RoomSid,
-                    audioSources: '*',
-                    videoLayout: {
-                        single: {
-                            video_sources: [req.body.ParticipantSid]
-                        }
-                    },
-                    statusCallback: webhookCompositionCallbackUrl,
-                    format: 'mp4'
-                })
-                .then(composition => {
-                    console.log('Created Composition with SID=' + composition.sid);
-                })
-                .catch(message => { console.log(message) })
         }
         if (req.body.StatusCallbackEvent == "recording-completed") { // recording-completed callback
             console.log("recording-completed")
@@ -425,25 +423,25 @@ exports.compositionCallback = function(req, res) {
     console.log(req.body)
     if (req.body.StatusCallbackEvent != undefined) {
         if (req.body.StatusCallbackEvent == "composition-enqueued") { // composition-enqueued callback
-
         }
         if (req.body.StatusCallbackEvent == "composition-hook-failed") { // composition-hook-failed callback
-
         }
         if (req.body.StatusCallbackEvent == "composition-started") { // composition-started callback
-
+            console.log("composition-started")
         }
         if (req.body.StatusCallbackEvent == "composition-available") { // composition-available callback
-
+            return res.json({ mediaUri: "video.twilio.com" + req.body.CompositionUri + "/Media" });
         }
         if (req.body.StatusCallbackEvent == "composition-progress") { // composition-progress callback
-
+            console.log("composition-progress")
         }
         if (req.body.StatusCallbackEvent == "composition-failed") { // composition-failed callback
-
+            console.log("composition-failed")
         }
+        return res.json({ success: true });
+    } else {
+        return res.json({ success: false });
     }
-    return res.json({ success: true });
 }
 
 // generate token for the specified user and room
@@ -461,6 +459,34 @@ exports.generateAccessToken = function(req, res) {
     // containing the grant we just created
     const token = new AccessToken(accountSid, twilioApiKey, twilioApiSecret);
     token.addGrant(videoGrant);
+    token.identity = identity;
+
+    // Serialize the token to a JWT string
+    let jwt = token.toJwt();
+    return res.json({ success: true, token: jwt });
+}
+
+// generate token for the chat
+exports.generateChatAccessToken = function(req, res) {
+    const ChatGrant = AccessToken.ChatGrant;
+    const identity = req.account._id;
+    const deviceId = req.params.deviceId;
+    const appName = "WeLoveChat";
+
+    // Create a unique ID for the client on their current device
+    const endpointId = appName + ':' + identity + ':' + deviceId;
+
+    // Create a "grant" which enables a client to use Chat as a given user,
+    // on a given device
+    const chatGrant = new ChatGrant({
+        serviceSid: process.env.TWILIO_CHAT_SERVICE_SID,
+        endpointId: endpointId,
+    });
+
+    // Create an access token which we will sign and return to the client,
+    // containing the grant we just created
+    const token = new AccessToken(accountSid, twilioApiKey, twilioApiSecret);
+    token.addGrant(chatGrant);
     token.identity = identity;
 
     // Serialize the token to a JWT string
