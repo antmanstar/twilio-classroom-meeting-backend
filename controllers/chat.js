@@ -6,6 +6,7 @@ const authToken = twilioOptions.TWILIO_ACCOUNT_AUTH_TOKEN;
 const twilioApiKey = twilioOptions.TWILIO_API_KEY;
 const twilioApiSecret = twilioOptions.TWILIO_API_SECRET;
 const serviceId = twilioOptions.TWILIO_IPM_SERVICE_SID;
+const appName = twilioOptions.TWILIO_APP_NAME;
 const tw = require('twilio')(accountSid, authToken);
 const AccessToken = require('twilio').jwt.AccessToken;
 
@@ -14,7 +15,6 @@ exports.generateChatAccessToken = function(req, res) {
     const ChatGrant = AccessToken.ChatGrant;
     const identity = req.account._id;
     const deviceId = req.params.deviceId;
-    const appName = "WeLoveChat";
 
     if (deviceId != undefined && deviceId != null) {
         // Create a unique ID for the client on their current device
