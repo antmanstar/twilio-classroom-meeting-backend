@@ -32,6 +32,6 @@ var classroom_controller = require('../controllers/chat.js');
  *    }
  *    
  */
-router.get('/chat_token', classroom_controller.generateChatAccessToken);
+router.get('/chat_token/deviceId/:deviceId', classroom_controller.generateChatAccessToken);
 
 module.exports = router;

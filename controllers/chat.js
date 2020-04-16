@@ -13,7 +13,7 @@ const AccessToken = require('twilio').jwt.AccessToken;
 exports.generateChatAccessToken = function(req, res) {
     const ChatGrant = AccessToken.ChatGrant;
     const identity = req.account._id;
-    const deviceId = req.body.deviceId;
+    const deviceId = req.params.deviceId;
     const appName = "WeLoveChat";
 
     if (deviceId != undefined && deviceId != null) {
