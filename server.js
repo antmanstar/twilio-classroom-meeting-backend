@@ -11,9 +11,10 @@ let bodyParser = require('body-parser');
 let cors = require('cors');
 
 /* Routes */
-let routesPublic = require('./routes/classroomPublic.js');
-let routesPrivate = require('./routes/classroomPrivate.js');
+let classroomPublic = require('./routes/classroomPublic.js');
+let classroomPrivate = require('./routes/classroomPrivate.js');
 let classroomWebhook = require('./routes/classroomWebhook.js');
+let chatPrivate = require('./routes/chatPrivate.js');
 
 /* CLI Arguments */
 let parseArgs = require('minimist')
@@ -77,8 +78,9 @@ app.use(cors());
 
 /* Accounts routes */
 app.use('/classroom', classroomWebhook);
-app.use('/classroom', routesPublic);
-app.use('/classroom', routesPrivate);
+app.use('/classroom', classroomPublic);
+app.use('/classroom', classroomPrivate);
+app.use('/classroom', chatPrivate);
 
 /* Start API */
 app.listen(port, function() {

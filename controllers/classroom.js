@@ -1,29 +1,17 @@
-let mongoose = require('mongoose');
-let jwt = require('jsonwebtoken');
 let Classroom = require('../models/Classroom.js');
-// let Donation = require('../models/Donation.js');
-
-let bcrypt = require('bcryptjs');
 let lodash = require('lodash');
-let jwtOptions = require('../config/jwt.js');
 
 let twilioOptions = require('../config/twilio.js');
-
-let SDK = require('../lib/sdkconfig.js');
-
-let university = SDK.university;
-let emails = SDK.emails;
-
-const webhookRoomCallbackUrl = "http://c395e03d.ngrok.io/classroom/classroom/webhook/roomCallback";
-const webhookCompositionCallbackUrl = "http://c395e03d.ngrok.io/classroom/classroom/webhook/compositionCallback"
 
 const accountSid = twilioOptions.TWILIO_ACCOUNT_SID;
 const authToken = twilioOptions.TWILIO_ACCOUNT_AUTH_TOKEN;
 const twilioApiKey = twilioOptions.TWILIO_API_KEY;
 const twilioApiSecret = twilioOptions.TWILIO_API_SECRET;
-const serviceId = twilioOptions.TWILIO_IPM_SERVICE_SID;
 const tw = require('twilio')(accountSid, authToken);
 const AccessToken = require('twilio').jwt.AccessToken;
+
+const webhookRoomCallbackUrl = "webhook/roomCallback";
+const webhookCompositionCallbackUrl = "webhook/compositionCallback";
 
 let twClient = tw.video;
 let twErrorDic = {
@@ -34,19 +22,20 @@ let twErrorDic = {
 exports.getAllClassrooms = function(req, res) {
     Classroom.find({}, function(err, data) {
         if (err) {
-            return res.json({ success: false, status: 500 });
+            return res.json({ success: false, status: 500, msg: "DB error" });
         } else if (data != undefined && data != null) {
             return res.json({ success: true, data: data, status: 200 });
         } else {
-            return res.json({ success: false, status: 404 });
+            return res.json({ success: false, status: 404, msg: "Not Found!" });
         }
     });
 }
 
+// delete all classrooms
 exports.delAllClassrooms = function(req, res) {
     Classroom.remove({}, function(err, data) {
         if (err) {
-            return res.json({ success: false, status: 500 });
+            return res.json({ success: false, status: 500, msg: "DB error" });
         } else if (data != undefined && data != null) {
             return res.json({ success: true, data: data, status: 200 });
         } else {
@@ -55,21 +44,21 @@ exports.delAllClassrooms = function(req, res) {
     });
 }
 
-// delete all the univeristies in the given university
+// delete all the classrooms in the given university
 exports.delAllClassroomsByUniversity = function(req, res) {
     let universityId = req.params.id;
     if (universityId != undefined && universityId != null) {
         Classroom.remove({ universityId: universityId }, function(err, data) {
             if (err) {
-                return res.json({ success: false, status: 500 });
+                return res.json({ success: false, status: 500, msg: "DB error" });
             } else if (data != undefined && data != null) {
                 return res.json({ success: true, data: data, status: 200 });
             } else {
-                return res.json({ success: false, status: 404 });
+                return res.json({ success: false, status: 404, msg: "Not Found" });
             }
         });
     } else {
-        return res.json({ success: false, status: 400 })
+        return res.json({ success: false, status: 400, msg: "University ID undefiend." })
     }
 }
 
@@ -98,17 +87,18 @@ exports.createUniversityClassroom = function(req, res) {
     let uniqueName = req.body.roomName
     let privilege = req.body.privilege;
 
-    if (privilege >= 99) {
+    if (privilege >= 99) { // only administrator can creat the room
         let newRoom = new Classroom();
-        newRoom.recordParticipantsOnConnect = true;
-        newRoom.uniqueName = uniqueName;
-        newRoom.status = "in-progress";
-        newRoom.universityId = universityId;
-        newRoom.accountSid = accountId;
-        newRoom.statusCallback = webhookRoomCallbackUrl;
-        newRoom.minPrivilege = 0;
-        newRoom.type = "group";
-        newRoom.members = [];
+
+        newRoom.recordParticipantsOnConnect = true; // if this param is true, whenever the participant(student or admistrator) join to the room, the recording is started.
+        newRoom.uniqueName = uniqueName; // classroom unique name
+        newRoom.status = "in-progress"; // setting up the current room status in progrss means that the room is alive
+        newRoom.universityId = universityId; // university id
+        newRoom.accountSid = accountId; // user id (student or company id)
+        newRoom.statusCallback = `${req.headers.host}/classroom/${webhookRoomCallbackUrl}`; // setting up call back url for the classroom event
+        newRoom.minPrivilege = 0; // minimum privilege of the user who can join to the classroom (not used now and every body who logged can join)
+        newRoom.type = "group"; // classroom type (there are 3 types ['group', 'small group', 'peer to peer])
+        newRoom.members = []; // all the participants who are in the current classroom
 
         twClient.rooms.create({
                 uniqueName: newRoom.uniqueName,
@@ -119,11 +109,11 @@ exports.createUniversityClassroom = function(req, res) {
                 newRoom.roomSID = room.sid;
                 newRoom.save(function(err, doc) {
                     if (err)
-                        return res.json({ success: false, status: 500, msg: err });
+                        return res.json({ success: false, status: 500, msg: "DB error" });
                     else if (doc != undefined && doc != null)
                         return res.json({ success: true, status: 201, data: { id: doc._id, sid: room.sid } });
                     else
-                        return res.json({ success: false, status: 404 });
+                        return res.json({ success: false, status: 404, msg: "Not created!" });
                 });
 
             })
@@ -156,7 +146,7 @@ exports.getClassroomByRoomId = function(req, res) {
 
     Classroom.findOne({ roomSID: roomId }, function(err, data) {
         if (err)
-            return res.json({ success: false, status: 500, err: "DB error" });
+            return res.json({ success: false, status: 500, msg: "DB error" });
         else if (data != undefined && data != null)
             return res.json({ success: true, status: 200, data: data });
         else
@@ -172,7 +162,7 @@ exports.endClassroom = function(req, res) {
     if (privilege >= 99) {
         Classroom.findOne({ roomSID: roomId }, function(err, data) {
             if (err)
-                return res.json({ success: false, status: 500, err: err });
+                return res.json({ success: false, status: 500, msg: "DB error" });
             else if (data != undefined && data != null) {
                 if (data.status == "completed")
                     return res.json({ success: false, status: 403, msg: "Room already completed!" });
@@ -182,19 +172,19 @@ exports.endClassroom = function(req, res) {
                         console.log(room)
                         Classroom.findOneAndRemove({ roomSID: roomId }, function(err, data) {
                             if (err)
-                                return res.json({ success: false, status: 500, err: err });
+                                return res.json({ success: false, status: 500, msg: "DB error" });
                             else if (data != undefined && data != null) {
-                                return res.json({ success: true, status: 200, msg: "Successfully deleted" });
+                                return res.json({ success: true, status: 200, msg: "Successfully ended" });
                             } else
-                                return res.json({ success: false, status: 404 });
+                                return res.json({ success: false, status: 404, msg: "Not Found" });
                         });
                     })
                     .catch(message => {
                         console.log(message)
-                        res.json({ success: false, status: 400, err: message })
+                        res.json({ success: false, status: 400, msg: message })
                     });
             } else
-                return res.json({ success: false, status: 404 });
+                return res.json({ success: false, status: 404, msg: "Not Found" });
         });
     } else {
         return res.json({ success: false, status: 403, msg: "You are not a Administrator" });
@@ -208,22 +198,22 @@ exports.joinClassroom = function(req, res) {
 
     Classroom.findOne({ roomSID: classroomId }, function(err, data) {
         if (err) {
-            return res.json({ success: false, status: 500, err: err });
+            return res.json({ success: false, status: 500, msg: "DB error" });
         } else if (data != undefined && data != null) {
             if (data.status == "completed")
-                return res.json({ success: false, status: 403, err: "Room is completed!" });
+                return res.json({ success: false, status: 403, msg: "Room is completed!" });
             let classroom = data;
             classroom.members = lodash.union([accountId], classroom.members);
             classroom.save(function(err, doc) {
                 if (err)
-                    return res.json({ success: false, status: 500, err: err });
+                    return res.json({ success: false, status: 500, msg: "DB error" });
                 else if (doc != undefined && doc != null)
                     return res.json({ success: true, status: 200, data: data });
                 else
-                    return res.json({ success: false, status: 404 });
+                    return res.json({ success: false, status: 404, msg: "Not Found" });
             });
         } else {
-            return res.json({ success: false, status: 404 });
+            return res.json({ success: false, status: 404, msg: "Not Found" });
         }
     });
 }
@@ -235,64 +225,24 @@ exports.leaveClassroom = function(req, res) {
 
     Classroom.findOne({ roomSID: classroomId }, function(err, data) {
         if (err) {
-            return res.json({ success: false, status: 500, err: err });
+            return res.json({ success: false, status: 500, msg: "DB error" });
         } else if (data != undefined && data != null) {
             let classroom = data;
 
             classroom.members = lodash.difference(classroom.members, [accountId]);
             classroom.save(function(err, doc) {
                 if (err)
-                    return res.json({ success: false, status: 500, err: err });
+                    return res.json({ success: false, status: 500, msg: "DB error" });
                 else if (doc != undefined && doc != null)
                     return res.json({ success: true, status: 200, data: data });
                 else
-                    return res.json({ success: false, status: 404 });
+                    return res.json({ success: false, status: 404, msg: "Not Found" });
             });
         } else {
-            return res.json({ success: false, status: 404 });
+            return res.json({ success: false, status: 404, msg: "Not Found" });
         }
     });
 }
-
-// // stop recording
-// exports.stopRecording = function(req, res) {
-//     let recId = req.params.id;
-//     twClient.recordings(recId)
-//         .update({ status: 'completed' })
-//         .then(recording => {
-//             res.json({ success: true, status: 200 });
-//         })
-//         .catch(err => {
-//             res.json({ success: false, status: 403, err: err });
-//         })
-// }
-
-// // start recording
-// exports.startRecording = function(req, res) {
-//     let recId = req.params.id;
-//     twClient.recordings(recId)
-//         .update({ status: 'processing' })
-//         .then(recording => {
-//             res.json({ success: true, status: 200 });
-//         })
-//         .catch(err => {
-//             res.json({ success: false, status: 403, err: err });
-//         })
-// }
-
-//  get all participants by roomid
-// exports.getAllParticipantByRoomId = function(req, res) {
-//     let roomId = req.params.id;
-//     twClient.rooms(roomId)
-//         .participants.get('antman')
-//         .fetch()
-//         .then(participant => {
-//             console.log(participant);
-//             res.json({ success: true, status: 200 });
-//         }).catch(message => {
-//             return { message: message }
-//         })
-// }
 
 // get recording by participants Id
 exports.getAllRecordingsByPId = function(req, res) {
@@ -304,7 +254,7 @@ exports.getAllRecordingsByPId = function(req, res) {
         })
         .catch(err => {
             console.log(err)
-            return res.json({ success: false, status: 400, err: message })
+            return res.json({ success: false, status: 400, msg: "Recording not exist." })
         })
 }
 
@@ -318,22 +268,22 @@ exports.createCompositionOfRecording = function(req, res) {
     client.video.compositions.
     create({
             roomSid: classroomId,
-            audioSources: '*',
+            audioSources: '*', // all the audio from all the participants
             videoLayout: {
                 single: {
-                    video_sources: [participantId]
+                    video_sources: [participantId] // video of current participant
                 }
             },
-            statusCallback: webhookCompositionCallbackUrl,
-            format: 'mp4'
+            statusCallback: `${req.headers.host}/classroom/${webhookCompositionCallbackUrl}`, //  call back for the composition processing event
+            format: 'mp4' // media type
         })
         .then(composition => {
             console.log('Created Composition with SID=' + composition.sid);
             return res.json({ success: true, data: composition, status: 200 });
         })
         .catch(message => {
-            res.json({ success: false, status: 401 });
             console.log("Error", message)
+            return res.json({ success: false, status: 401, msg: "composition failed" });
         });
 }
 
@@ -342,7 +292,7 @@ exports.getComposedMedia = function(req, res) {
     const Twilio = require('twilio');
     const client = new Twilio(twilioApiKey, twilioApiSecret, { accountSid: accountSid });
 
-    const uri = 'https://video.twilio.com/v1/Compositions/' + req.params.id + '/Media?Ttl=3600';
+    const uri = 'https://video.twilio.com/v1/Compositions/' + req.params.id + '/Media?Ttl=3600'; // media absoulte uri
     client.request({
             method: 'GET',
             uri: uri
@@ -354,33 +304,16 @@ exports.getComposedMedia = function(req, res) {
         })
         .catch(error => {
             console.log("Error" + error);
-            res.json({ success: false, status: 400 });
+            res.json({ success: false, status: 400, msg: "composition not exist" });
         });
 }
 
 
 // callbacks for the room event
 exports.roomCallback = function(req, res) {
-    console.log(req.body)
     if (req.body.StatusCallbackEvent != undefined) {
         if (req.body.StatusCallbackEvent == "room-ended") { // room-ended callback
             console.log("room ended")
-            twClient.compositions.
-            create({
-                    roomSid: req.body.RoomSid,
-                    audioSources: '*',
-                    videoLayout: {
-                        single: {
-                            video_sources: [req.body.ParticipantSid]
-                        }
-                    },
-                    statusCallback: webhookCompositionCallbackUrl,
-                    format: 'mp4'
-                })
-                .then(composition => {
-                    console.log('Created Composition with SID=' + composition.sid);
-                })
-                .catch(message => { console.log(message) })
         }
         if (req.body.StatusCallbackEvent == "room-created") { // room-created callback
             console.log("room created")
@@ -420,7 +353,6 @@ exports.roomCallback = function(req, res) {
 
 // the call back for the composition event
 exports.compositionCallback = function(req, res) {
-    console.log(req.body)
     if (req.body.StatusCallbackEvent != undefined) {
         if (req.body.StatusCallbackEvent == "composition-enqueued") { // composition-enqueued callback
         }
