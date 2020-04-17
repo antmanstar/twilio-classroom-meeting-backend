@@ -1,0 +1,1 @@
+module.exports = {server:"https://weLOVE.education"};
