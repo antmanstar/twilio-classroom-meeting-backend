@@ -28,7 +28,7 @@ let ClassroomSchema = new Schema({
     status: { // The status of the room. Can be: in-progress, failed, or completed
         type: String
     },
-    minPrivilege: { // minimum privilege of participant who can join to the classroom
+    minPrivilege: { // minimum privilege
         type: Number,
         required: true
     },
@@ -61,6 +61,9 @@ let ClassroomSchema = new Schema({
     maxParticipants: {
         type: Number
     },
+    // videoCodecs: {
+    //   type:
+    // }
     url: {
         type: String
     },

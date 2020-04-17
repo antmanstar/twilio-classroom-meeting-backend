@@ -1,10 +1,13 @@
 let twilioOptions = require('../config/twilio.js');
+let SDK = require('../lib/sdkconfig.js');
 
 const accountSid = twilioOptions.TWILIO_ACCOUNT_SID;
+const authToken = twilioOptions.TWILIO_ACCOUNT_AUTH_TOKEN;
 const twilioApiKey = twilioOptions.TWILIO_API_KEY;
 const twilioApiSecret = twilioOptions.TWILIO_API_SECRET;
 const serviceId = twilioOptions.TWILIO_IPM_SERVICE_SID;
 const appName = twilioOptions.TWILIO_APP_NAME;
+const tw = require('twilio')(accountSid, authToken);
 const AccessToken = require('twilio').jwt.AccessToken;
 
 // generate token for the chat
