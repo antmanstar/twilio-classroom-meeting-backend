@@ -6,12 +6,13 @@ var classroom_controller = require('../controllers/chat.js');
 /**
   Get access token for the chat
 **/
+
 /**
- * @api {GET} /all get the chat access token
+ * @api {GET} /chat_token/deviceId/:deviceId get the chat access token
  * @apiName getAllClassrooms
  * @apiGroup Classroom
  *
- * @apiParam {}
+ * @apiParam {Number} :deviceId user based device id.
  *
  * @apiSuccess {json} chat access token.
  * @apiSuccessExample {json} Success-Response:
@@ -19,7 +20,7 @@ var classroom_controller = require('../controllers/chat.js');
  *     {
  *        "success": true,
  *        "data": {
- *             "chat_token": "xxxxxxx..."
+ *             "chat_token": "exxxxxxx..."
  *        }
  *        "status": 200
  *     }
