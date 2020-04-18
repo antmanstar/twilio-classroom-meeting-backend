@@ -164,24 +164,37 @@ exports.endClassroom = function(req, res) {
             if (err)
                 return res.json({ success: false, status: 500, msg: "DB error" });
             else if (data != undefined && data != null) {
-                if (data.status == "completed")
-                    return res.json({ success: false, status: 403, msg: "Room already completed!" });
                 twClient.rooms(roomId)
-                    .update({ status: "completed" })
+                    .fetch()
                     .then(room => {
-                        console.log(room)
-                        Classroom.findOneAndRemove({ roomSID: roomId }, function(err, data) {
-                            if (err)
-                                return res.json({ success: false, status: 500, msg: "DB error" });
-                            else if (data != undefined && data != null) {
-                                return res.json({ success: true, status: 200, msg: "Successfully ended" });
-                            } else
-                                return res.json({ success: false, status: 404, msg: "Not Found" });
-                        });
-                    })
-                    .catch(message => {
-                        console.log(message)
-                        res.json({ success: false, status: 400, msg: message })
+                        if (room.status == "completed") {
+                            Classroom.remove({ roomSID: roomId }, function(err, data) {
+                                if (err)
+                                    return res.json({ success: false, status: 500, msg: "DB error" });
+                                else if (data != undefined && data != null) {
+                                    return res.json({ success: true, status: 200, msg: "Successfully ended" });
+                                } else
+                                    return res.json({ success: false, status: 404, msg: "Not Found" });
+                            });
+                        } else {
+                            twClient.rooms(roomId)
+                                .update({ status: "completed" })
+                                .then(room => {
+                                    console.log(room)
+                                    Classroom.remove({ roomSID: roomId }, function(err, data) {
+                                        if (err)
+                                            return res.json({ success: false, status: 500, msg: "DB error" });
+                                        else if (data != undefined && data != null) {
+                                            return res.json({ success: true, status: 200, msg: "Successfully ended" });
+                                        } else
+                                            return res.json({ success: false, status: 404, msg: "Not Found" });
+                                    });
+                                })
+                                .catch(message => {
+                                    console.log(message)
+                                    res.json({ success: false, status: 400, msg: message })
+                                });
+                        }
                     });
             } else
                 return res.json({ success: false, status: 404, msg: "Not Found" });
@@ -333,7 +346,7 @@ exports.roomCallback = function(req, res) {
         if (req.body.StatusCallbackEvent == "track-enabled") { // track-enabled callback
             console.log("track-enabled")
         }
-        if (req.body.StatusCallbackEvent == "track-disabled") { // track-disabled callback
+        if (req.body.StatusCallbackEvent == "track-disabled") { // track-disabled callback                               
             console.log("track-disabled")
         }
         if (req.body.StatusCallbackEvent == "recording-started") { // recording-started callback
