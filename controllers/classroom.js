@@ -333,7 +333,7 @@ exports.roomCallback = function(req, res) {
         if (req.body.StatusCallbackEvent == "track-enabled") { // track-enabled callback
             console.log("track-enabled")
         }
-        if (req.body.StatusCallbackEvent == "track-disabled") { // track-disabled callback                               
+        if (req.body.StatusCallbackEvent == "track-disabled") { // track-disabled callback
             console.log("track-disabled")
         }
         if (req.body.StatusCallbackEvent == "recording-started") { // recording-started callback
