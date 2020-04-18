@@ -3,6 +3,7 @@ var router = express.Router();
 
 var classroom_controller = require('../controllers/classroom.js');
 
+// dealing with cors permission
 router.use(function(req, res, next) {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
@@ -11,13 +12,17 @@ router.use(function(req, res, next) {
 });
 
 /**
+  CALL BACK WEB HOOK
+**/
+
+/**
  * @api {post} /classroom/webhook/roomCallback Callback regarding to room events
  * @apiName roomCallback
  * @apiGroup Classroom
  *
- * @apiParam {}
+ * @apiParam {} 
  *
- * @apiSuccess {Callback}
+ * @apiSuccess {Callback} 
  *
  */
 
@@ -28,14 +33,11 @@ router.post('/webhook/roomCallback', classroom_controller.roomCallback);
  * @apiName roomCallback
  * @apiGroup Classroom
  *
- * @apiParam {}
+ * @apiParam {} 
  *
- * @apiSuccess {Callback}
+ * @apiSuccess {Callback} 
  *
  */
 router.post('/webhook/compositionCallback', classroom_controller.compositionCallback);
-
-router.post('/classroom/webhook/roomCallback', classroom_controller.roomCallback);
-router.post('/classroom/webhook/compositionCallback', classroom_controller.compositionCallback);
 
 module.exports = router;
