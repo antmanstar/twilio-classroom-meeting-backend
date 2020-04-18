@@ -283,7 +283,7 @@ exports.createCompositionOfRecording = function(req, res) {
         })
         .catch(message => {
             console.log("Error", message)
-            return res.json({ success: false, status: 401, msg: "composition failed" });
+            return res.json({ success: false, status: 401, msg: "Composition Creation Failed" });
         });
 }
 
@@ -304,7 +304,7 @@ exports.getComposedMedia = function(req, res) {
         })
         .catch(error => {
             console.log("Error" + error);
-            res.json({ success: false, status: 400, msg: "composition not exist" });
+            res.json({ success: false, status: 400, msg: "Composition not exist" });
         });
 }
 

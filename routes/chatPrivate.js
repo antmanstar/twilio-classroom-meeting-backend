@@ -6,6 +6,7 @@ var classroom_controller = require('../controllers/chat.js');
 /**
   Get access token for the chat
 **/
+
 /**
  * @api {GET} /chat_token/deviceId/:deviceId get the chat access token
  * @apiName getAllClassrooms
