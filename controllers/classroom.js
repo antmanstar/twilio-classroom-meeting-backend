@@ -20,20 +20,23 @@ let twErrorDic = {
 
 // get all the classrooms over all the universities
 exports.getAllClassrooms = function(req, res) {
-    Classroom.find({}, function(err, data) {
-        if (err) {
-            return res.json({ success: false, status: 500, msg: "DB error" });
-        } else if (data != undefined && data != null) {
-            return res.json({ success: true, data: data, status: 200 });
-        } else {
-            return res.json({ success: false, status: 404, msg: "Not Found!" });
-        }
-    });
+    // Classroom.find({}, function(err, data) {
+    //     if (err) {
+    //         return res.json({ success: false, status: 500, msg: "DB error" });
+    //     } else if (data != undefined && data != null) {
+    //         return res.json({ success: true, data: data, status: 200 });
+    //     } else {
+    //         return res.json({ success: false, status: 404, msg: "Not Found!" });
+    //     }
+    // });
+
+    twClient.rooms.list()
+        .then(rooms => { return res.json({ success: true, data: rooms, status: 200 }) });
 }
 
 // delete all classrooms
 exports.delAllClassrooms = function(req, res) {
-    Classroom.remove({}, function(err, data) {
+    Classroom.remove({}, function(err, data) { // remove room
         if (err) {
             return res.json({ success: false, status: 500, msg: "DB error" });
         } else if (data != undefined && data != null) {
@@ -48,7 +51,7 @@ exports.delAllClassrooms = function(req, res) {
 exports.delAllClassroomsByUniversity = function(req, res) {
     let universityId = req.params.id;
     if (universityId != undefined && universityId != null) {
-        Classroom.remove({ universityId: universityId }, function(err, data) {
+        Classroom.remove({ universityId: universityId }, function(err, data) { // remove room
             if (err) {
                 return res.json({ success: false, status: 500, msg: "DB error" });
             } else if (data != undefined && data != null) {
@@ -66,7 +69,7 @@ exports.delAllClassroomsByUniversity = function(req, res) {
 exports.getAllClassroomsByUniversity = function(req, res) {
     let universityId = req.params.id;
     if (universityId != undefined && universityId != null) {
-        Classroom.find({ universityId: universityId }, function(err, data) {
+        Classroom.find({ universityId: universityId }, function(err, data) { // finding room
             if (err) {
                 return res.json({ success: false, status: 500, msg: "DB error" });
             } else if (data != undefined && data != null) {
@@ -86,7 +89,6 @@ exports.createUniversityClassroom = function(req, res) {
     let universityId = req.body.id;
     let uniqueName = req.body.roomName
     let privilege = req.body.privilege;
-
     if (privilege >= 99) { // only administrator can creat the room
         let newRoom = new Classroom();
 
@@ -95,19 +97,19 @@ exports.createUniversityClassroom = function(req, res) {
         newRoom.status = "in-progress"; // setting up the current room status in progrss means that the room is alive
         newRoom.universityId = universityId; // university id
         newRoom.accountSid = accountId; // user id (student or company id)
-        newRoom.statusCallback = `${req.headers.host}/classroom/${webhookRoomCallbackUrl}`; // setting up call back url for the classroom event
+        newRoom.statusCallback = `https://${req.headers.host}/classroom/${webhookRoomCallbackUrl}`; // setting up call back url for the classroom event
         newRoom.minPrivilege = 0; // minimum privilege of the user who can join to the classroom (not used now and every body who logged can join)
         newRoom.type = "group"; // classroom type (there are 3 types ['group', 'small group', 'peer to peer])
         newRoom.members = []; // all the participants who are in the current classroom
 
-        twClient.rooms.create({
+        twClient.rooms.create({ // create the room
                 uniqueName: newRoom.uniqueName,
                 statusCallback: newRoom.statusCallback,
                 recordParticipantsOnConnect: newRoom.recordParticipantsOnConnect,
             })
-            .then(room => {
+            .then(room => { // creation success
                 newRoom.roomSID = room.sid;
-                newRoom.save(function(err, doc) {
+                newRoom.save(function(err, doc) { // saving created room to the db
                     if (err)
                         return res.json({ success: false, status: 500, msg: "DB error" });
                     else if (doc != undefined && doc != null)
@@ -117,7 +119,7 @@ exports.createUniversityClassroom = function(req, res) {
                 });
 
             })
-            .catch(message => {
+            .catch(message => { // creation fail
                 console.log(message)
                 res.json({ success: false, status: 400, msg: twErrorDic[message.code] })
             });
@@ -130,7 +132,7 @@ exports.getClassroomsByAdmin = function(req, res) {
     let accountId = req.account._id;
     let universityId = req.params.id;
 
-    Classroom.find({ accountSid: accountId, universityId: universityId }, function(err, data) {
+    Classroom.find({ accountSid: accountId, universityId: universityId }, function(err, data) { // finding room
         if (err)
             return res.json({ success: false, status: 500, msg: "DB error" });
         else if (data != undefined && data != null)
@@ -144,7 +146,7 @@ exports.getClassroomsByAdmin = function(req, res) {
 exports.getClassroomByRoomId = function(req, res) {
     let roomId = req.params.id;
 
-    Classroom.findOne({ roomSID: roomId }, function(err, data) {
+    Classroom.findOne({ roomSID: roomId }, function(err, data) { // finding room
         if (err)
             return res.json({ success: false, status: 500, msg: "DB error" });
         else if (data != undefined && data != null)
@@ -167,7 +169,7 @@ exports.endClassroom = function(req, res) {
                 twClient.rooms(roomId)
                     .fetch()
                     .then(room => {
-                        if (room.status == "completed") {
+                        if (room.status == "completed") { // decide current is completed or not
                             Classroom.remove({ roomSID: roomId }, function(err, data) {
                                 if (err)
                                     return res.json({ success: false, status: 500, msg: "DB error" });
@@ -178,23 +180,19 @@ exports.endClassroom = function(req, res) {
                             });
                         } else {
                             twClient.rooms(roomId)
-                                .update({ status: "completed" })
+                                .update({ status: "completed" }) // complete the room
                                 .then(room => {
-                                    console.log(room)
-                                    Classroom.remove({ roomSID: roomId }, function(err, data) {
-                                        if (err)
-                                            return res.json({ success: false, status: 500, msg: "DB error" });
-                                        else if (data != undefined && data != null) {
-                                            return res.json({ success: true, status: 200, msg: "Successfully ended" });
-                                        } else
-                                            return res.json({ success: false, status: 404, msg: "Not Found" });
-                                    });
+                                    return res.json({ success: true, status: 200, msg: "Successfully ended" });
                                 })
                                 .catch(message => {
                                     console.log(message)
                                     res.json({ success: false, status: 400, msg: message })
                                 });
                         }
+                    })
+                    .catch(message => {
+                        console.log(message)
+                        res.json({ success: false, status: 400, msg: message })
                     });
             } else
                 return res.json({ success: false, status: 404, msg: "Not Found" });
@@ -209,14 +207,14 @@ exports.joinClassroom = function(req, res) {
     let classroomId = req.params.id;
     let accountId = req.account._id;
 
-    Classroom.findOne({ roomSID: classroomId }, function(err, data) {
+    Classroom.findOne({ roomSID: classroomId }, function(err, data) { // finding the room
         if (err) {
             return res.json({ success: false, status: 500, msg: "DB error" });
         } else if (data != undefined && data != null) {
             if (data.status == "completed")
                 return res.json({ success: false, status: 403, msg: "Room is completed!" });
             let classroom = data;
-            classroom.members = lodash.union([accountId], classroom.members);
+            classroom.members = lodash.union([accountId], classroom.members); // participant adding
             classroom.save(function(err, doc) {
                 if (err)
                     return res.json({ success: false, status: 500, msg: "DB error" });
@@ -236,13 +234,13 @@ exports.leaveClassroom = function(req, res) {
     let classroomId = req.params.id;
     let accountId = req.account._id;
 
-    Classroom.findOne({ roomSID: classroomId }, function(err, data) {
+    Classroom.findOne({ roomSID: classroomId }, function(err, data) { // finding the room
         if (err) {
             return res.json({ success: false, status: 500, msg: "DB error" });
         } else if (data != undefined && data != null) {
             let classroom = data;
 
-            classroom.members = lodash.difference(classroom.members, [accountId]);
+            classroom.members = lodash.difference(classroom.members, [accountId]); // participnat remove
             classroom.save(function(err, doc) {
                 if (err)
                     return res.json({ success: false, status: 500, msg: "DB error" });
@@ -260,7 +258,7 @@ exports.leaveClassroom = function(req, res) {
 // get recording by participants Id
 exports.getAllRecordingsByPId = function(req, res) {
     pId = req.params.pid;
-    twClient.recordings.list({ groupingSid: [pId], limit: 20 })
+    twClient.recordings.list({ groupingSid: [pId], limit: 20 }) // recordings list
         .then(recordings => {
             console.log(recordings);
             return res.json({ success: true, status: 200, data: recordings });
@@ -287,7 +285,7 @@ exports.createCompositionOfRecording = function(req, res) {
                     video_sources: [participantId] // video of current participant
                 }
             },
-            statusCallback: `${req.headers.host}/classroom/${webhookCompositionCallbackUrl}`, //  call back for the composition processing event
+            statusCallback: `https://${req.headers.host}/classroom/${webhookCompositionCallbackUrl}`, //  call back for the composition processing event
             format: 'mp4' // media type
         })
         .then(composition => {
@@ -326,16 +324,17 @@ exports.getComposedMedia = function(req, res) {
 exports.roomCallback = function(req, res) {
     if (req.body.StatusCallbackEvent != undefined) {
         if (req.body.StatusCallbackEvent == "room-ended") { // room-ended callback
-            console.log("room ended")
+            console.log("room-ended");
+            Classroom.remove({ roomSID: req.body.RoomSid }, function(err, data) {});
         }
         if (req.body.StatusCallbackEvent == "room-created") { // room-created callback
-            console.log("room created")
+            console.log("room-created")
         }
         if (req.body.StatusCallbackEvent == "participant-connected") { // participant-connected callback
             console.log("participant-connected")
         }
         if (req.body.StatusCallbackEvent == "participant-disconnected") { // participant-disconnected callback
-            console.log("participant-disconnected")
+            console.log(req.body)
         }
         if (req.body.StatusCallbackEvent == "track-added") { // track-added callback
             console.log("track-added")
