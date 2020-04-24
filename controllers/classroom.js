@@ -20,15 +20,18 @@ let twErrorDic = {
 
 // get all the classrooms over all the universities
 exports.getAllClassrooms = function(req, res) {
-    Classroom.find({}, function(err, data) {
-        if (err) {
-            return res.json({ success: false, status: 500, msg: "DB error" });
-        } else if (data != undefined && data != null) {
-            return res.json({ success: true, data: data, status: 200 });
-        } else {
-            return res.json({ success: false, status: 404, msg: "Not Found!" });
-        }
-    });
+    // Classroom.find({}, function(err, data) {
+    //     if (err) {
+    //         return res.json({ success: false, status: 500, msg: "DB error" });
+    //     } else if (data != undefined && data != null) {
+    //         return res.json({ success: true, data: data, status: 200 });
+    //     } else {
+    //         return res.json({ success: false, status: 404, msg: "Not Found!" });
+    //     }
+    // });
+
+    twClient.rooms.list()
+        .then(rooms => { return res.json({ success: true, data: rooms, status: 200 }) });
 }
 
 // delete all classrooms
@@ -95,7 +98,7 @@ exports.createUniversityClassroom = function(req, res) {
         newRoom.status = "in-progress"; // setting up the current room status in progrss means that the room is alive
         newRoom.universityId = universityId; // university id
         newRoom.accountSid = accountId; // user id (student or company id)
-        newRoom.statusCallback = `${req.headers.host}/classroom/${webhookRoomCallbackUrl}`; // setting up call back url for the classroom event
+        newRoom.statusCallback = `https://${req.headers.host}/classroom/${webhookRoomCallbackUrl}`; // setting up call back url for the classroom event
         newRoom.minPrivilege = 0; // minimum privilege of the user who can join to the classroom (not used now and every body who logged can join)
         newRoom.type = "group"; // classroom type (there are 3 types ['group', 'small group', 'peer to peer])
         newRoom.members = []; // all the participants who are in the current classroom
@@ -111,7 +114,7 @@ exports.createUniversityClassroom = function(req, res) {
                     if (err)
                         return res.json({ success: false, status: 500, msg: "DB error" });
                     else if (doc != undefined && doc != null)
-                        return res.json({ success: true, status: 201, data: { id: doc._id, sid: room.sid } });
+                        return res.json({ success: true, status: 201, data: { id: doc._id, sid: room.sid, roomData: doc } });
                     else
                         return res.json({ success: false, status: 404, msg: "Not created!" });
                 });
@@ -167,7 +170,7 @@ exports.endClassroom = function(req, res) {
                 twClient.rooms(roomId)
                     .fetch()
                     .then(room => {
-                        if (room.status == "completed") {
+                        if (room.status == "completed") { // decide current is completed or not
                             Classroom.remove({ roomSID: roomId }, function(err, data) {
                                 if (err)
                                     return res.json({ success: false, status: 500, msg: "DB error" });
@@ -178,23 +181,19 @@ exports.endClassroom = function(req, res) {
                             });
                         } else {
                             twClient.rooms(roomId)
-                                .update({ status: "completed" })
+                                .update({ status: "completed" }) // complete the room
                                 .then(room => {
-                                    console.log(room)
-                                    Classroom.remove({ roomSID: roomId }, function(err, data) {
-                                        if (err)
-                                            return res.json({ success: false, status: 500, msg: "DB error" });
-                                        else if (data != undefined && data != null) {
-                                            return res.json({ success: true, status: 200, msg: "Successfully ended" });
-                                        } else
-                                            return res.json({ success: false, status: 404, msg: "Not Found" });
-                                    });
+                                    return res.json({ success: true, status: 200, msg: "Successfully ended" });
                                 })
                                 .catch(message => {
                                     console.log(message)
                                     res.json({ success: false, status: 400, msg: message })
                                 });
                         }
+                    })
+                    .catch(message => {
+                        console.log(message)
+                        res.json({ success: false, status: 400, msg: message })
                     });
             } else
                 return res.json({ success: false, status: 404, msg: "Not Found" });
@@ -287,7 +286,7 @@ exports.createCompositionOfRecording = function(req, res) {
                     video_sources: [participantId] // video of current participant
                 }
             },
-            statusCallback: `${req.headers.host}/classroom/${webhookCompositionCallbackUrl}`, //  call back for the composition processing event
+            statusCallback: `https://${req.headers.host}/classroom/${webhookCompositionCallbackUrl}`, //  call back for the composition processing event
             format: 'mp4' // media type
         })
         .then(composition => {
@@ -326,16 +325,17 @@ exports.getComposedMedia = function(req, res) {
 exports.roomCallback = function(req, res) {
     if (req.body.StatusCallbackEvent != undefined) {
         if (req.body.StatusCallbackEvent == "room-ended") { // room-ended callback
-            console.log("room ended")
+            console.log("room-ended");
+            Classroom.remove({ roomSID: req.body.RoomSid }, function(err, data) {});
         }
         if (req.body.StatusCallbackEvent == "room-created") { // room-created callback
-            console.log("room created")
+            console.log("room-created")
         }
         if (req.body.StatusCallbackEvent == "participant-connected") { // participant-connected callback
             console.log("participant-connected")
         }
         if (req.body.StatusCallbackEvent == "participant-disconnected") { // participant-disconnected callback
-            console.log("participant-disconnected")
+            console.log(req.body)
         }
         if (req.body.StatusCallbackEvent == "track-added") { // track-added callback
             console.log("track-added")
