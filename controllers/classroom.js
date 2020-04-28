@@ -441,12 +441,13 @@ exports.generateAccessToken = function(req, res) {
 //     });
 // 
 
-// exports.getAllParticipants = function(req, res) {
-//     let roomId = req.body.id;
-//     let participants = []
-//     twClient.rooms(roomId).participants
-//         .each({ status: 'connected' }, (participant) => {
-//             participants.push(participant);
-//         })
-//     return res.json({ success: true, data: participant });
-// }
+exports.getAllParticipants = function(req, res) {
+    let roomId = req.body.id;
+    let participantArr = []
+    twClient.rooms(roomId).participants
+        .each({ status: 'connected' }, (participant) => {
+            // participantArr.push(participant);
+            console.log("AA")
+        })
+    return res.json({ success: true, data: participantArr });
+}
