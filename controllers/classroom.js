@@ -446,8 +446,8 @@ exports.getAllParticipants = function(req, res) {
     let participantArr = []
     twClient.rooms(roomId).participants
         .each({ status: 'connected' }, (participant) => {
-            // participantArr.push(participant);
-            console.log("AA")
+            participantArr.push(participant);
+            // console.log("AA")
         })
     return res.json({ success: true, data: participantArr });
 }
