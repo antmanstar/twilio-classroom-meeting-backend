@@ -84,6 +84,6 @@ router.get('/all', classroom_controller.getAllClassrooms);
  *    
  */
 router.delete('/all', classroom_controller.delAllClassrooms);
-router.get('/participants', classroom_controller.getAllParticipants);
+// router.get('/participants', classroom_controller.getAllParticipants);
 
 module.exports = router;
