@@ -448,6 +448,8 @@ exports.getAllParticipants = function(req, res) {
         .each({ status: 'connected' }, (participant) => {
             participantArr.push(participant);
             // console.log("AA")
+        }).then(() => { return res.json({ success: true, data: participantArr }) })
+        .catch(() => {
+            return res.json({ success: false });
         })
-    return res.json({ success: true, data: participantArr });
 }
