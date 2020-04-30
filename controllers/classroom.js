@@ -439,17 +439,33 @@ exports.generateAccessToken = function(req, res) {
 //             return res.json({ success: false, status: 142 });
 //         }
 //     });
-// 
+// }
 
 exports.getAllParticipants = function(req, res) {
     let roomId = req.body.id;
-    let participantArr = []
-    twClient.rooms(roomId).participants
-        .each({ status: 'connected' }, (participant) => {
-            participantArr.push(participant);
-            // console.log("AA")
-        }).then(() => { return res.json({ success: true, data: participantArr }) })
-        .catch(() => {
-            return res.json({ success: false });
+    return twClient.rooms(roomId).participants
+        .list()
+        .then((participants) => {
+            console.log(participants)
+            return res.json({ success: true, status: 200, data: participants })
+        }).catch(err => {
+            return res.json({ success: true, status: 400, msg: 'failed' })
         })
+}
+
+exports.subscribeAll = function(req, res) {
+    let roomId = req.body.id;
+    let pId = req.body.pid;
+    twClient.rooms(roomId).participants.get(pId)
+        .subscribeRules.update({
+            rules: [
+                { "type": "include", "all": true }
+            ]
+        })
+        .then(result => {
+            return res.json({ success: true, status: 200, msg: "subscribed" });
+        })
+        .catch(error => {
+            return res.json({ success: falsse, status: 400, msg: 'subscription failed' })
+        });
 }
