@@ -113,7 +113,7 @@ exports.createUniversityClassroom = function(req, res) {
                     if (err)
                         return res.json({ success: false, status: 500, msg: "DB error" });
                     else if (doc != undefined && doc != null)
-                        return res.json({ success: true, status: 201, data: { id: doc._id, sid: room.sid } });
+                        return res.json({ success: true, status: 201, data: { id: doc._id, sid: room.sid, roomData: doc } });
                     else
                         return res.json({ success: false, status: 404, msg: "Not created!" });
                 });
@@ -439,3 +439,32 @@ exports.generateAccessToken = function(req, res) {
 //         }
 //     });
 // }
+
+exports.getAllParticipants = function(req, res) {
+    let roomId = req.body.id;
+    return twClient.rooms(roomId).participants
+        .list()
+        .then((participants) => {
+            console.log(participants)
+            return res.json({ success: true, status: 200, data: participants })
+        }).catch(err => {
+            return res.json({ success: true, status: 400, msg: 'failed' })
+        })
+}
+
+exports.subscribeAll = function(req, res) {
+    let roomId = req.body.id;
+    let pId = req.body.pid;
+    twClient.rooms(roomId).participants.get(pId)
+        .subscribeRules.update({
+            rules: [
+                { "type": "include", "all": true }
+            ]
+        })
+        .then(result => {
+            return res.json({ success: true, status: 200, msg: "subscribed" });
+        })
+        .catch(error => {
+            return res.json({ success: falsse, status: 400, msg: 'subscription failed' })
+        });
+}
