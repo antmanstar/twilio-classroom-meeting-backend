@@ -21,7 +21,7 @@ exports.generateChatAccessToken = function(req, res) {
         // on a given device
         const chatGrant = new ChatGrant({
             serviceSid: serviceId,
-            endpointId: endpointId,
+            // endpointId: endpointId,
         });
 
         // Create an access token which we will sign and return to the client,
