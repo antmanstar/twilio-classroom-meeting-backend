@@ -410,17 +410,6 @@ exports.generateAccessToken = function(req, res) {
     return res.json({ success: true, token: jwt });
 }
 
-// exports.privateMeeting = function(req, res) {
-//     Classroom.find({}, function(err, data) {
-//     	if(err) {
-//     		return res.json({success: false, status: 101});
-//     	} else if(data != undefined && data != null) {
-//     		return res.json({success: true, data: data, status: 102});
-//     	}
-//     	return res.json({ success:false, status: 103});
-//     });
-// }
-
 // exports.donate = function(req, res) {
 //     let classroomId = req.params.id;
 //     let accountId = req.account._id;
