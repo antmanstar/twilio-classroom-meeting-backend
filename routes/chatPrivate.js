@@ -1,7 +1,7 @@
 var express = require('express');
 var router = express.Router();
 
-var classroom_controller = require('../controllers/chat.js');
+var chat_controller = require('../controllers/chat.js');
 
 /**
   Get access token for the chat
@@ -31,8 +31,15 @@ var classroom_controller = require('../controllers/chat.js');
  *       "success": false,
  *       "status": 400
  *    }
- *
+ *    
  */
-router.get('/chat_token/deviceId/:deviceId', classroom_controller.generateChatAccessToken);
+router.get('/chat_token/deviceId/:deviceId', chat_controller.generateChatAccessToken);
+router.post('/channel', chat_controller.createChannel);
+router.get('/channel/all', chat_controller.getAllChannels);
+router.get('/channel/id/:chid', chat_controller.getChannelByChannelId);
+router.get('/channel/name/:name', chat_controller.getChannelByUniqueName);
+router.delete('/channel', chat_controller.delChannel);
+router.delete('/channel/all', chat_controller.delAllChannels);
+router.delete('/channel/name/', chat_controller.delChannelByUniqueName);
 
 module.exports = router;

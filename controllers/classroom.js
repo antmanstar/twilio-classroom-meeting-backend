@@ -9,6 +9,7 @@ const twilioApiKey = twilioOptions.TWILIO_API_KEY;
 const twilioApiSecret = twilioOptions.TWILIO_API_SECRET;
 const tw = require('twilio')(accountSid, authToken);
 const AccessToken = require('twilio').jwt.AccessToken;
+const serviceId = twilioOptions.TWILIO_IPM_SERVICE_SID;
 
 const webhookRoomCallbackUrl = "webhook/roomCallback";
 const webhookCompositionCallbackUrl = "webhook/compositionCallback";
@@ -20,23 +21,13 @@ let twErrorDic = {
 
 // get all the classrooms over all the universities
 exports.getAllClassrooms = function(req, res) {
-    // Classroom.find({}, function(err, data) {
-    //     if (err) {
-    //         return res.json({ success: false, status: 500, msg: "DB error" });
-    //     } else if (data != undefined && data != null) {
-    //         return res.json({ success: true, data: data, status: 200 });
-    //     } else {
-    //         return res.json({ success: false, status: 404, msg: "Not Found!" });
-    //     }
-    // });
-
     twClient.rooms.list()
         .then(rooms => { return res.json({ success: true, data: rooms, status: 200 }) });
 }
 
 // delete all classrooms
 exports.delAllClassrooms = function(req, res) {
-    Classroom.remove({}, function(err, data) {
+    Classroom.remove({}, function(err, data) { // remove room
         if (err) {
             return res.json({ success: false, status: 500, msg: "DB error" });
         } else if (data != undefined && data != null) {
@@ -51,7 +42,7 @@ exports.delAllClassrooms = function(req, res) {
 exports.delAllClassroomsByUniversity = function(req, res) {
     let universityId = req.params.id;
     if (universityId != undefined && universityId != null) {
-        Classroom.remove({ universityId: universityId }, function(err, data) {
+        Classroom.remove({ universityId: universityId }, function(err, data) { // remove room
             if (err) {
                 return res.json({ success: false, status: 500, msg: "DB error" });
             } else if (data != undefined && data != null) {
@@ -69,7 +60,7 @@ exports.delAllClassroomsByUniversity = function(req, res) {
 exports.getAllClassroomsByUniversity = function(req, res) {
     let universityId = req.params.id;
     if (universityId != undefined && universityId != null) {
-        Classroom.find({ universityId: universityId }, function(err, data) {
+        Classroom.find({ universityId: universityId }, function(err, data) { // finding room
             if (err) {
                 return res.json({ success: false, status: 500, msg: "DB error" });
             } else if (data != undefined && data != null) {
@@ -85,11 +76,11 @@ exports.getAllClassroomsByUniversity = function(req, res) {
 
 // create the classroom
 exports.createUniversityClassroom = function(req, res) {
+    let mobile = req.body.mobile;
     let accountId = req.account._id;
     let universityId = req.body.id;
     let uniqueName = req.body.roomName
     let privilege = req.body.privilege;
-
     if (privilege >= 99) { // only administrator can creat the room
         let newRoom = new Classroom();
 
@@ -103,24 +94,39 @@ exports.createUniversityClassroom = function(req, res) {
         newRoom.type = "group"; // classroom type (there are 3 types ['group', 'small group', 'peer to peer])
         newRoom.members = []; // all the participants who are in the current classroom
 
-        twClient.rooms.create({
+        twClient.rooms.create({ // create the room
                 uniqueName: newRoom.uniqueName,
                 statusCallback: newRoom.statusCallback,
                 recordParticipantsOnConnect: newRoom.recordParticipantsOnConnect,
             })
-            .then(room => {
+            .then(room => { // creation success
                 newRoom.roomSID = room.sid;
-                newRoom.save(function(err, doc) {
+                newRoom.save(function(err, doc) { // saving created room to the db
                     if (err)
                         return res.json({ success: false, status: 500, msg: "DB error" });
-                    else if (doc != undefined && doc != null)
-                        return res.json({ success: true, status: 201, data: { id: doc._id, sid: room.sid, roomData: doc } });
-                    else
+                    else if (doc != undefined && doc != null) {
+                        if (mobile == true) { // in case of mobile, create channel, too 
+                            tw.chat.services(serviceId)
+                                .channels
+                                .create({
+                                    friendlyName: "welovechannel",
+                                    uniqueName: room.sid,
+                                    type: 'public',
+                                })
+                                .then(channel => {
+                                    return res.json({ success: true, status: 201, data: { id: doc._id, sid: room.sid, roomData: doc, channelData: channel } });
+                                }).catch(message => {
+                                    return res.json({ success: false, status: 400, msg: message })
+                                })
+                        } else {
+                            return res.json({ success: true, status: 201, data: { id: doc._id, sid: room.sid, roomData: doc } });
+                        }
+                    } else
                         return res.json({ success: false, status: 404, msg: "Not created!" });
                 });
 
             })
-            .catch(message => {
+            .catch(message => { // creation fail
                 console.log(message)
                 res.json({ success: false, status: 400, msg: twErrorDic[message.code] })
             });
@@ -133,7 +139,7 @@ exports.getClassroomsByAdmin = function(req, res) {
     let accountId = req.account._id;
     let universityId = req.params.id;
 
-    Classroom.find({ accountSid: accountId, universityId: universityId }, function(err, data) {
+    Classroom.find({ accountSid: accountId, universityId: universityId }, function(err, data) { // finding room
         if (err)
             return res.json({ success: false, status: 500, msg: "DB error" });
         else if (data != undefined && data != null)
@@ -147,7 +153,7 @@ exports.getClassroomsByAdmin = function(req, res) {
 exports.getClassroomByRoomId = function(req, res) {
     let roomId = req.params.id;
 
-    Classroom.findOne({ roomSID: roomId }, function(err, data) {
+    Classroom.findOne({ roomSID: roomId }, function(err, data) { // finding room
         if (err)
             return res.json({ success: false, status: 500, msg: "DB error" });
         else if (data != undefined && data != null)
@@ -208,14 +214,14 @@ exports.joinClassroom = function(req, res) {
     let classroomId = req.params.id;
     let accountId = req.account._id;
 
-    Classroom.findOne({ roomSID: classroomId }, function(err, data) {
+    Classroom.findOne({ roomSID: classroomId }, function(err, data) { // finding the room
         if (err) {
             return res.json({ success: false, status: 500, msg: "DB error" });
         } else if (data != undefined && data != null) {
             if (data.status == "completed")
                 return res.json({ success: false, status: 403, msg: "Room is completed!" });
             let classroom = data;
-            classroom.members = lodash.union([accountId], classroom.members);
+            classroom.members = lodash.union([accountId], classroom.members); // participant adding
             classroom.save(function(err, doc) {
                 if (err)
                     return res.json({ success: false, status: 500, msg: "DB error" });
@@ -235,13 +241,13 @@ exports.leaveClassroom = function(req, res) {
     let classroomId = req.params.id;
     let accountId = req.account._id;
 
-    Classroom.findOne({ roomSID: classroomId }, function(err, data) {
+    Classroom.findOne({ roomSID: classroomId }, function(err, data) { // finding the room
         if (err) {
             return res.json({ success: false, status: 500, msg: "DB error" });
         } else if (data != undefined && data != null) {
             let classroom = data;
 
-            classroom.members = lodash.difference(classroom.members, [accountId]);
+            classroom.members = lodash.difference(classroom.members, [accountId]); // participnat remove
             classroom.save(function(err, doc) {
                 if (err)
                     return res.json({ success: false, status: 500, msg: "DB error" });
@@ -259,7 +265,7 @@ exports.leaveClassroom = function(req, res) {
 // get recording by participants Id
 exports.getAllRecordingsByPId = function(req, res) {
     pId = req.params.pid;
-    twClient.recordings.list({ groupingSid: [pId], limit: 20 })
+    twClient.recordings.list({ groupingSid: [pId], limit: 20 }) // recordings list
         .then(recordings => {
             console.log(recordings);
             return res.json({ success: true, status: 200, data: recordings });
@@ -327,6 +333,10 @@ exports.roomCallback = function(req, res) {
         if (req.body.StatusCallbackEvent == "room-ended") { // room-ended callback
             console.log("room-ended");
             Classroom.remove({ roomSID: req.body.RoomSid }, function(err, data) {});
+            tw.chat.services(serviceId)
+                .channels
+                .list({ uniqueName: req.body.RoomSid })
+                .then(channels => channels[0].remove())
         }
         if (req.body.StatusCallbackEvent == "room-created") { // room-created callback
             console.log("room-created")
@@ -410,17 +420,6 @@ exports.generateAccessToken = function(req, res) {
     let jwt = token.toJwt();
     return res.json({ success: true, token: jwt });
 }
-
-// exports.privateMeeting = function(req, res) {
-//     Classroom.find({}, function(err, data) {
-//     	if(err) {
-//     		return res.json({success: false, status: 101});
-//     	} else if(data != undefined && data != null) {
-//     		return res.json({success: true, data: data, status: 102});
-//     	}
-//     	return res.json({ success:false, status: 103});
-//     });
-// }
 
 // exports.donate = function(req, res) {
 //     let classroomId = req.params.id;
