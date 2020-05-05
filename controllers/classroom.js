@@ -9,6 +9,7 @@ const twilioApiKey = twilioOptions.TWILIO_API_KEY;
 const twilioApiSecret = twilioOptions.TWILIO_API_SECRET;
 const tw = require('twilio')(accountSid, authToken);
 const AccessToken = require('twilio').jwt.AccessToken;
+const serviceId = twilioOptions.TWILIO_IPM_SERVICE_SID;
 
 const webhookRoomCallbackUrl = "webhook/roomCallback";
 const webhookCompositionCallbackUrl = "webhook/compositionCallback";
@@ -20,16 +21,6 @@ let twErrorDic = {
 
 // get all the classrooms over all the universities
 exports.getAllClassrooms = function(req, res) {
-    // Classroom.find({}, function(err, data) {
-    //     if (err) {
-    //         return res.json({ success: false, status: 500, msg: "DB error" });
-    //     } else if (data != undefined && data != null) {
-    //         return res.json({ success: true, data: data, status: 200 });
-    //     } else {
-    //         return res.json({ success: false, status: 404, msg: "Not Found!" });
-    //     }
-    // });
-
     twClient.rooms.list()
         .then(rooms => { return res.json({ success: true, data: rooms, status: 200 }) });
 }
@@ -85,6 +76,7 @@ exports.getAllClassroomsByUniversity = function(req, res) {
 
 // create the classroom
 exports.createUniversityClassroom = function(req, res) {
+    let mobile = req.body.mobile;
     let accountId = req.account._id;
     let universityId = req.body.id;
     let uniqueName = req.body.roomName
@@ -112,9 +104,24 @@ exports.createUniversityClassroom = function(req, res) {
                 newRoom.save(function(err, doc) { // saving created room to the db
                     if (err)
                         return res.json({ success: false, status: 500, msg: "DB error" });
-                    else if (doc != undefined && doc != null)
-                        return res.json({ success: true, status: 201, data: { id: doc._id, sid: room.sid, roomData: doc } });
-                    else
+                    else if (doc != undefined && doc != null) {
+                        if (mobile == true) { // in case of mobile, create channel, too 
+                            tw.chat.services(serviceId)
+                                .channels
+                                .create({
+                                    friendlyName: "welovechannel",
+                                    uniqueName: room.sid,
+                                    type: 'public',
+                                })
+                                .then(channel => {
+                                    return res.json({ success: true, status: 201, data: { id: doc._id, sid: room.sid, roomData: doc, channelData: channel } });
+                                }).catch(message => {
+                                    return res.json({ success: false, status: 400, msg: message })
+                                })
+                        } else {
+                            return res.json({ success: true, status: 201, data: { id: doc._id, sid: room.sid, roomData: doc } });
+                        }
+                    } else
                         return res.json({ success: false, status: 404, msg: "Not created!" });
                 });
 
@@ -326,6 +333,10 @@ exports.roomCallback = function(req, res) {
         if (req.body.StatusCallbackEvent == "room-ended") { // room-ended callback
             console.log("room-ended");
             Classroom.remove({ roomSID: req.body.RoomSid }, function(err, data) {});
+            tw.chat.services(serviceId)
+                .channels
+                .list({ uniqueName: req.body.RoomSid })
+                .then(channels => channels[0].remove())
         }
         if (req.body.StatusCallbackEvent == "room-created") { // room-created callback
             console.log("room-created")

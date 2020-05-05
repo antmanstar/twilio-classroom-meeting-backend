@@ -23,7 +23,7 @@ exports.generateChatAccessToken = function(req, res) {
         // on a given device
         const chatGrant = new ChatGrant({
             serviceSid: serviceId,
-            endpointId: endpointId,
+            // endpointId: endpointId,
         });
 
         // Create an access token which we will sign and return to the client,
@@ -34,7 +34,7 @@ exports.generateChatAccessToken = function(req, res) {
 
         // Serialize the token to a JWT string
         let jwt = token.toJwt();
-        return res.json({ success: true, token: jwt });
+        return res.json({ success: true, token: jwt, });
     } else {
         return res.json({ success: false, msg: 'Device ID missing' });
     }
@@ -59,7 +59,7 @@ exports.createChannel = function(req, res) {
         })
 }
 
-// get channel
+// get all channels
 exports.getAllChannels = function(req, res) {
     tw.chat.services(serviceId)
         .channels
@@ -81,6 +81,42 @@ exports.getChannelByChannelId = function(req, res) {
         .fetch()
         .then(channel => {
             return res.json({ success: true, status: 201, data: channel });
+        })
+        .catch(message => {
+            return res.json({ success: false, status: 400, msg: message })
+        })
+}
+
+// get a channel by unique name
+exports.getChannelByUniqueName = function(req, res) {
+    const uniqueName = req.body.uniqueName;
+
+    tw.chat.services(serviceId)
+        .channels
+        .list({ uniqueName: uniqueName })
+        .then(channels => {
+            return res.json({ success: true, status: 201, data: channels[0] });
+        })
+        .catch(message => {
+            return res.json({ success: false, status: 400, msg: message })
+        })
+}
+
+
+// del all channels
+exports.delAllChannels = function(req, res) {
+    tw.chat.services(serviceId)
+        .channels
+        .list()
+        .then(channels => {
+            channels.forEach(channel => {
+                channel
+                    .remove()
+                    .catch((message) => {
+                        return res.json({ success: false, status: 400, msg: message })
+                    })
+            })
+            return res.json({ success: true, status: 201, msg: 'sucess' });
         })
         .catch(message => {
             return res.json({ success: false, status: 400, msg: message })
@@ -109,22 +145,24 @@ exports.delChannel = function(req, res) {
         })
 }
 
-// del all channels
-exports.delAllChannels = function(req, res) {
+// del a channel by unique name
+exports.delChannelByUniqueName = function(req, res) {
+    const uniqueName = req.body.uniqueName;
+
     tw.chat.services(serviceId)
         .channels
-        .list()
+        .list({ uniqueName: uniqueName })
         .then(channels => {
-            channels.forEach(channel => {
-                channel
-                    .remove()
-                    .catch((message) => {
-                        return res.json({ success: false, status: 400, msg: message })
-                    })
-            })
-            return res.json({ success: true, status: 201, msg: 'sucess' });
+            channels[0]
+                .remove()
+                .then(() => {
+                    return res.json({ success: true, status: 201, data: 'successfully deleted' });
+                })
+                .catch(message => {
+                    return res.json({ success: false, status: 400, msg: message });
+                })
         })
         .catch(message => {
-            return res.json({ success: false, status: 400, msg: message })
+            return res.json({ success: false, status: 400, msg: message });
         })
 }
