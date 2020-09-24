@@ -44,7 +44,12 @@ let port = process.env.PORT || 8080;
 let config = require('config');
 
 /* Database options */
-let options = { useNewUrlParser: true, useUnifiedTopology: true };
+let options = {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useCreateIndex: true,
+    // useMongoClient: true
+};
 
 /* Database */
 mongoose.connect(config.DBHost, options)
