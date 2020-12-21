@@ -16,7 +16,8 @@ const webhookCompositionCallbackUrl = "webhook/compositionCallback";
 
 let twClient = tw.video;
 let twErrorDic = {
-    53113: "Room Exists!",
+    53113: "Room exists!",
+    53101: "Room name is too long!"
 }
 
 // get all the classrooms over all the universities
@@ -128,7 +129,7 @@ exports.createUniversityClassroom = function(req, res) {
             })
             .catch(message => { // creation fail
                 console.log(message)
-                res.json({ success: false, status: 400, msg: message })
+                res.json({ success: false, status: 400, msg: twErrorDic[message.code] })
             });
     } else
         return res.json({ success: false, status: 403, msg: "Insufficient Privilege" });
