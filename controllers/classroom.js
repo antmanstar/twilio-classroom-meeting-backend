@@ -16,7 +16,8 @@ const webhookCompositionCallbackUrl = "webhook/compositionCallback";
 
 let twClient = tw.video;
 let twErrorDic = {
-    53113: "Room Exists!",
+    53113: "Room exists!",
+    53101: "Room name is too long!"
 }
 
 // get all the classrooms over all the universities
@@ -247,7 +248,7 @@ exports.leaveClassroom = function(req, res) {
         } else if (data != undefined && data != null) {
             let classroom = data;
 
-            classroom.members = lodash.difference(classroom.members, [accountId]); // participnat remove
+            classroom.members = lodash.difference(classroom.members, [accountId]); // participant remove
             classroom.save(function(err, doc) {
                 if (err)
                     return res.json({ success: false, status: 500, msg: "DB error" });
@@ -325,7 +326,6 @@ exports.getComposedMedia = function(req, res) {
             res.json({ success: false, status: 400, msg: "Composition not exist" });
         });
 }
-
 
 // callbacks for the room event
 exports.roomCallback = function(req, res) {
