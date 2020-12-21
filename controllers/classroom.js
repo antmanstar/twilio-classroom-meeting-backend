@@ -1,49 +1,36 @@
 let Classroom = require('../models/Classroom.js');
-// let Donation = require('../models/Donation.js');
-
-let bcrypt = require('bcryptjs');
 let lodash = require('lodash');
 
 let twilioOptions = require('../config/twilio.js');
-
-let SDK = require('../lib/sdkconfig.js');
-
-let university = SDK.university;
-let emails = SDK.emails;
-
-const webhookRoomCallbackUrl = "https://educationalcommunity-classroom.herokuapp.com/classroom/classroom/webhook/roomCallback";
-const webhookCompositionCallbackUrl = "https://educationalcommunity-classroom.herokuapp.com/classroom/classroom/webhook/compositionCallback"
 
 const accountSid = twilioOptions.TWILIO_ACCOUNT_SID;
 const authToken = twilioOptions.TWILIO_ACCOUNT_AUTH_TOKEN;
 const twilioApiKey = twilioOptions.TWILIO_API_KEY;
 const twilioApiSecret = twilioOptions.TWILIO_API_SECRET;
-const serviceId = twilioOptions.TWILIO_IPM_SERVICE_SID;
 const tw = require('twilio')(accountSid, authToken);
 const AccessToken = require('twilio').jwt.AccessToken;
+const serviceId = twilioOptions.TWILIO_IPM_SERVICE_SID;
+
+const webhookRoomCallbackUrl = "webhook/roomCallback";
+const webhookCompositionCallbackUrl = "webhook/compositionCallback";
 
 let twClient = tw.video;
 let twErrorDic = {
-    53113: "Room Exists!",
+    53113: "Room exists!",
+    53101: "Room name is too long!"
 }
 
 // get all the classrooms over all the universities
 exports.getAllClassrooms = function(req, res) {
-    Classroom.find({}, function(err, data) {
-        if (err) {
-            return res.json({ success: false, status: 500 });
-        } else if (data != undefined && data != null) {
-            return res.json({ success: true, data: data, status: 200 });
-        } else {
-            return res.json({ success: false, status: 404 });
-        }
-    });
+    twClient.rooms.list()
+        .then(rooms => { return res.json({ success: true, data: rooms, status: 200 }) });
 }
 
+// delete all classrooms
 exports.delAllClassrooms = function(req, res) {
-    Classroom.remove({}, function(err, data) {
+    Classroom.remove({}, function(err, data) { // remove room
         if (err) {
-            return res.json({ success: false, status: 500 });
+            return res.json({ success: false, status: 500, msg: "DB error" });
         } else if (data != undefined && data != null) {
             return res.json({ success: true, data: data, status: 200 });
         } else {
@@ -52,21 +39,21 @@ exports.delAllClassrooms = function(req, res) {
     });
 }
 
-// delete all the univeristies in the given university
+// delete all the classrooms in the given university
 exports.delAllClassroomsByUniversity = function(req, res) {
     let universityId = req.params.id;
     if (universityId != undefined && universityId != null) {
-        Classroom.remove({ universityId: universityId }, function(err, data) {
+        Classroom.remove({ universityId: universityId }, function(err, data) { // remove room
             if (err) {
-                return res.json({ success: false, status: 500 });
+                return res.json({ success: false, status: 500, msg: "DB error" });
             } else if (data != undefined && data != null) {
                 return res.json({ success: true, data: data, status: 200 });
             } else {
-                return res.json({ success: false, status: 404 });
+                return res.json({ success: false, status: 404, msg: "Not Found" });
             }
         });
     } else {
-        return res.json({ success: false, status: 400 })
+        return res.json({ success: false, status: 400, msg: "University ID undefiend." })
     }
 }
 
@@ -74,7 +61,7 @@ exports.delAllClassroomsByUniversity = function(req, res) {
 exports.getAllClassroomsByUniversity = function(req, res) {
     let universityId = req.params.id;
     if (universityId != undefined && universityId != null) {
-        Classroom.find({ universityId: universityId }, function(err, data) {
+        Classroom.find({ universityId: universityId }, function(err, data) { // finding room
             if (err) {
                 return res.json({ success: false, status: 500, msg: "DB error" });
             } else if (data != undefined && data != null) {
@@ -90,41 +77,57 @@ exports.getAllClassroomsByUniversity = function(req, res) {
 
 // create the classroom
 exports.createUniversityClassroom = function(req, res) {
+    let mobile = req.body.mobile;
     let accountId = req.account._id;
     let universityId = req.body.id;
     let uniqueName = req.body.roomName
     let privilege = req.body.privilege;
-
-    if (privilege >= 99) {
+    if (privilege >= 99) { // only administrator can creat the room
         let newRoom = new Classroom();
-        newRoom.recordParticipantsOnConnect = true;
-        newRoom.uniqueName = uniqueName;
-        newRoom.status = "in-progress";
-        newRoom.universityId = universityId;
-        newRoom.accountSid = accountId;
-        newRoom.statusCallback = webhookRoomCallbackUrl;
-        newRoom.minPrivilege = 0;
-        newRoom.type = "group";
-        newRoom.members = [];
 
-        twClient.rooms.create({
+        newRoom.recordParticipantsOnConnect = true; // if this param is true, whenever the participant(student or admistrator) join to the room, the recording is started.
+        newRoom.uniqueName = uniqueName; // classroom unique name
+        newRoom.status = "in-progress"; // setting up the current room status in progrss means that the room is alive
+        newRoom.universityId = universityId; // university id
+        newRoom.accountSid = accountId; // user id (student or company id)
+        newRoom.statusCallback = `https://${req.headers.host}/classroom/${webhookRoomCallbackUrl}`; // setting up call back url for the classroom event
+        newRoom.minPrivilege = 0; // minimum privilege of the user who can join to the classroom (not used now and every body who logged can join)
+        newRoom.type = "group"; // classroom type (there are 3 types ['group', 'small group', 'peer to peer])
+        newRoom.members = []; // all the participants who are in the current classroom
+
+        twClient.rooms.create({ // create the room
                 uniqueName: newRoom.uniqueName,
                 statusCallback: newRoom.statusCallback,
                 recordParticipantsOnConnect: newRoom.recordParticipantsOnConnect,
             })
-            .then(room => {
+            .then(room => { // creation success
                 newRoom.roomSID = room.sid;
-                newRoom.save(function(err, doc) {
+                newRoom.save(function(err, doc) { // saving created room to the db
                     if (err)
-                        return res.json({ success: false, status: 500, msg: err });
-                    else if (doc != undefined && doc != null)
-                        return res.json({ success: true, status: 201, data: { id: doc._id, sid: room.sid } });
-                    else
-                        return res.json({ success: false, status: 404 });
+                        return res.json({ success: false, status: 500, msg: "DB error" });
+                    else if (doc != undefined && doc != null) {
+                        if (mobile == true) { // in case of mobile, create channel, too 
+                            tw.chat.services(serviceId)
+                                .channels
+                                .create({
+                                    friendlyName: "welovechannel",
+                                    uniqueName: room.sid,
+                                    type: 'public',
+                                })
+                                .then(channel => {
+                                    return res.json({ success: true, status: 201, data: { id: doc._id, sid: room.sid, roomData: doc, channelData: channel } });
+                                }).catch(message => {
+                                    return res.json({ success: false, status: 400, msg: message })
+                                })
+                        } else {
+                            return res.json({ success: true, status: 201, data: { id: doc._id, sid: room.sid, roomData: doc } });
+                        }
+                    } else
+                        return res.json({ success: false, status: 404, msg: "Not created!" });
                 });
 
             })
-            .catch(message => {
+            .catch(message => { // creation fail
                 console.log(message)
                 res.json({ success: false, status: 400, msg: twErrorDic[message.code] })
             });
@@ -137,7 +140,7 @@ exports.getClassroomsByAdmin = function(req, res) {
     let accountId = req.account._id;
     let universityId = req.params.id;
 
-    Classroom.find({ accountSid: accountId, universityId: universityId }, function(err, data) {
+    Classroom.find({ accountSid: accountId, universityId: universityId }, function(err, data) { // finding room
         if (err)
             return res.json({ success: false, status: 500, msg: "DB error" });
         else if (data != undefined && data != null)
@@ -151,9 +154,9 @@ exports.getClassroomsByAdmin = function(req, res) {
 exports.getClassroomByRoomId = function(req, res) {
     let roomId = req.params.id;
 
-    Classroom.findOne({ roomSID: roomId }, function(err, data) {
+    Classroom.findOne({ roomSID: roomId }, function(err, data) { // finding room
         if (err)
-            return res.json({ success: false, status: 500, err: "DB error" });
+            return res.json({ success: false, status: 500, msg: "DB error" });
         else if (data != undefined && data != null)
             return res.json({ success: true, status: 200, data: data });
         else
@@ -169,29 +172,38 @@ exports.endClassroom = function(req, res) {
     if (privilege >= 99) {
         Classroom.findOne({ roomSID: roomId }, function(err, data) {
             if (err)
-                return res.json({ success: false, status: 500, err: err });
+                return res.json({ success: false, status: 500, msg: "DB error" });
             else if (data != undefined && data != null) {
-                if (data.status == "completed")
-                    return res.json({ success: false, status: 403, msg: "Room already completed!" });
                 twClient.rooms(roomId)
-                    .update({ status: "completed" })
+                    .fetch()
                     .then(room => {
-                        console.log(room)
-                        Classroom.findOneAndRemove({ roomSID: roomId }, function(err, data) {
-                            if (err)
-                                return res.json({ success: false, status: 500, err: err });
-                            else if (data != undefined && data != null) {
-                                return res.json({ success: true, status: 200, msg: "Successfully deleted" });
-                            } else
-                                return res.json({ success: false, status: 404 });
-                        });
+                        if (room.status == "completed") { // decide current is completed or not
+                            Classroom.remove({ roomSID: roomId }, function(err, data) {
+                                if (err)
+                                    return res.json({ success: false, status: 500, msg: "DB error" });
+                                else if (data != undefined && data != null) {
+                                    return res.json({ success: true, status: 200, msg: "Successfully ended" });
+                                } else
+                                    return res.json({ success: false, status: 404, msg: "Not Found" });
+                            });
+                        } else {
+                            twClient.rooms(roomId)
+                                .update({ status: "completed" }) // complete the room
+                                .then(room => {
+                                    return res.json({ success: true, status: 200, msg: "Successfully ended" });
+                                })
+                                .catch(message => {
+                                    console.log(message)
+                                    res.json({ success: false, status: 400, msg: message })
+                                });
+                        }
                     })
                     .catch(message => {
                         console.log(message)
-                        res.json({ success: false, status: 400, err: message })
+                        res.json({ success: false, status: 400, msg: message })
                     });
             } else
-                return res.json({ success: false, status: 404 });
+                return res.json({ success: false, status: 404, msg: "Not Found" });
         });
     } else {
         return res.json({ success: false, status: 403, msg: "You are not a Administrator" });
@@ -203,24 +215,24 @@ exports.joinClassroom = function(req, res) {
     let classroomId = req.params.id;
     let accountId = req.account._id;
 
-    Classroom.findOne({ roomSID: classroomId }, function(err, data) {
+    Classroom.findOne({ roomSID: classroomId }, function(err, data) { // finding the room
         if (err) {
-            return res.json({ success: false, status: 500, err: err });
+            return res.json({ success: false, status: 500, msg: "DB error" });
         } else if (data != undefined && data != null) {
             if (data.status == "completed")
-                return res.json({ success: false, status: 403, err: "Room is completed!" });
+                return res.json({ success: false, status: 403, msg: "Room is completed!" });
             let classroom = data;
-            classroom.members = lodash.union([accountId], classroom.members);
+            classroom.members = lodash.union([accountId], classroom.members); // participant adding
             classroom.save(function(err, doc) {
                 if (err)
-                    return res.json({ success: false, status: 500, err: err });
+                    return res.json({ success: false, status: 500, msg: "DB error" });
                 else if (doc != undefined && doc != null)
                     return res.json({ success: true, status: 200, data: data });
                 else
-                    return res.json({ success: false, status: 404 });
+                    return res.json({ success: false, status: 404, msg: "Not Found" });
             });
         } else {
-            return res.json({ success: false, status: 404 });
+            return res.json({ success: false, status: 404, msg: "Not Found" });
         }
     });
 }
@@ -230,78 +242,38 @@ exports.leaveClassroom = function(req, res) {
     let classroomId = req.params.id;
     let accountId = req.account._id;
 
-    Classroom.findOne({ roomSID: classroomId }, function(err, data) {
+    Classroom.findOne({ roomSID: classroomId }, function(err, data) { // finding the room
         if (err) {
-            return res.json({ success: false, status: 500, err: err });
+            return res.json({ success: false, status: 500, msg: "DB error" });
         } else if (data != undefined && data != null) {
             let classroom = data;
 
-            classroom.members = lodash.difference(classroom.members, [accountId]);
+            classroom.members = lodash.difference(classroom.members, [accountId]); // participant remove
             classroom.save(function(err, doc) {
                 if (err)
-                    return res.json({ success: false, status: 500, err: err });
+                    return res.json({ success: false, status: 500, msg: "DB error" });
                 else if (doc != undefined && doc != null)
                     return res.json({ success: true, status: 200, data: data });
                 else
-                    return res.json({ success: false, status: 404 });
+                    return res.json({ success: false, status: 404, msg: "Not Found" });
             });
         } else {
-            return res.json({ success: false, status: 404 });
+            return res.json({ success: false, status: 404, msg: "Not Found" });
         }
     });
 }
 
-// // stop recording
-// exports.stopRecording = function(req, res) {
-//     let recId = req.params.id;
-//     twClient.recordings(recId)
-//         .update({ status: 'completed' })
-//         .then(recording => {
-//             res.json({ success: true, status: 200 });
-//         })
-//         .catch(err => {
-//             res.json({ success: false, status: 403, err: err });
-//         })
-// }
-
-// // start recording
-// exports.startRecording = function(req, res) {
-//     let recId = req.params.id;
-//     twClient.recordings(recId)
-//         .update({ status: 'processing' })
-//         .then(recording => {
-//             res.json({ success: true, status: 200 });
-//         })
-//         .catch(err => {
-//             res.json({ success: false, status: 403, err: err });
-//         })
-// }
-
-//  get all participants by roomid
-// exports.getAllParticipantByRoomId = function(req, res) {
-//     let roomId = req.params.id;
-//     twClient.rooms(roomId)
-//         .participants.get('antman')
-//         .fetch()
-//         .then(participant => {
-//             console.log(participant);
-//             res.json({ success: true, status: 200 });
-//         }).catch(message => {
-//             return { message: message }
-//         })
-// }
-
 // get recording by participants Id
 exports.getAllRecordingsByPId = function(req, res) {
     pId = req.params.pid;
-    twClient.recordings.list({ groupingSid: [pId], limit: 20 })
+    twClient.recordings.list({ groupingSid: [pId], limit: 20 }) // recordings list
         .then(recordings => {
             console.log(recordings);
             return res.json({ success: true, status: 200, data: recordings });
         })
         .catch(err => {
             console.log(err)
-            return res.json({ success: false, status: 400, err: message })
+            return res.json({ success: false, status: 400, msg: "Recording not exist." })
         })
 }
 
@@ -315,22 +287,22 @@ exports.createCompositionOfRecording = function(req, res) {
     client.video.compositions.
     create({
             roomSid: classroomId,
-            audioSources: '*',
+            audioSources: '*', // all the audio from all the participants
             videoLayout: {
                 single: {
-                    video_sources: [participantId]
+                    video_sources: [participantId] // video of current participant
                 }
             },
-            statusCallback: webhookCompositionCallbackUrl,
-            format: 'mp4'
+            statusCallback: `https://${req.headers.host}/classroom/${webhookCompositionCallbackUrl}`, //  call back for the composition processing event
+            format: 'mp4' // media type
         })
         .then(composition => {
             console.log('Created Composition with SID=' + composition.sid);
             return res.json({ success: true, data: composition, status: 200 });
         })
         .catch(message => {
-            res.json({ success: false, status: 401 });
             console.log("Error", message)
+            return res.json({ success: false, status: 401, msg: "Composition Creation Failed" });
         });
 }
 
@@ -339,7 +311,7 @@ exports.getComposedMedia = function(req, res) {
     const Twilio = require('twilio');
     const client = new Twilio(twilioApiKey, twilioApiSecret, { accountSid: accountSid });
 
-    const uri = 'https://video.twilio.com/v1/Compositions/' + req.params.id + '/Media?Ttl=3600';
+    const uri = 'https://video.twilio.com/v1/Compositions/' + req.params.id + '/Media?Ttl=3600'; // media absoulte uri
     client.request({
             method: 'GET',
             uri: uri
@@ -351,42 +323,29 @@ exports.getComposedMedia = function(req, res) {
         })
         .catch(error => {
             console.log("Error" + error);
-            res.json({ success: false, status: 400 });
+            res.json({ success: false, status: 400, msg: "Composition not exist" });
         });
 }
 
-
 // callbacks for the room event
 exports.roomCallback = function(req, res) {
-    console.log(req.body)
     if (req.body.StatusCallbackEvent != undefined) {
         if (req.body.StatusCallbackEvent == "room-ended") { // room-ended callback
-            console.log("room ended")
-            twClient.compositions.
-            create({
-                    roomSid: req.body.RoomSid,
-                    audioSources: '*',
-                    videoLayout: {
-                        single: {
-                            video_sources: [req.body.ParticipantSid]
-                        }
-                    },
-                    statusCallback: webhookCompositionCallbackUrl,
-                    format: 'mp4'
-                })
-                .then(composition => {
-                    console.log('Created Composition with SID=' + composition.sid);
-                })
-                .catch(message => { console.log(message) })
+            console.log("room-ended");
+            Classroom.remove({ roomSID: req.body.RoomSid }, function(err, data) {});
+            tw.chat.services(serviceId)
+                .channels
+                .list({ uniqueName: req.body.RoomSid })
+                .then(channels => channels[0].remove())
         }
         if (req.body.StatusCallbackEvent == "room-created") { // room-created callback
-            console.log("room created")
+            console.log("room-created")
         }
         if (req.body.StatusCallbackEvent == "participant-connected") { // participant-connected callback
             console.log("participant-connected")
         }
         if (req.body.StatusCallbackEvent == "participant-disconnected") { // participant-disconnected callback
-            console.log("participant-disconnected")
+            console.log(req.body)
         }
         if (req.body.StatusCallbackEvent == "track-added") { // track-added callback
             console.log("track-added")
@@ -397,7 +356,7 @@ exports.roomCallback = function(req, res) {
         if (req.body.StatusCallbackEvent == "track-enabled") { // track-enabled callback
             console.log("track-enabled")
         }
-        if (req.body.StatusCallbackEvent == "track-disabled") { // track-disabled callback
+        if (req.body.StatusCallbackEvent == "track-disabled") { // track-disabled callback                               
             console.log("track-disabled")
         }
         if (req.body.StatusCallbackEvent == "recording-started") { // recording-started callback
@@ -417,7 +376,6 @@ exports.roomCallback = function(req, res) {
 
 // the call back for the composition event
 exports.compositionCallback = function(req, res) {
-    console.log(req.body)
     if (req.body.StatusCallbackEvent != undefined) {
         if (req.body.StatusCallbackEvent == "composition-enqueued") { // composition-enqueued callback
         }
@@ -463,45 +421,6 @@ exports.generateAccessToken = function(req, res) {
     return res.json({ success: true, token: jwt });
 }
 
-// generate token for the chat
-exports.generateChatAccessToken = function(req, res) {
-    const ChatGrant = AccessToken.ChatGrant;
-    const identity = req.account._id;
-    const deviceId = req.params.deviceId;
-    const appName = "WeLoveChat";
-
-    // Create a unique ID for the client on their current device
-    const endpointId = appName + ':' + identity + ':' + deviceId;
-
-    // Create a "grant" which enables a client to use Chat as a given user,
-    // on a given device
-    const chatGrant = new ChatGrant({
-        serviceSid: process.env.TWILIO_CHAT_SERVICE_SID,
-        endpointId: endpointId,
-    });
-
-    // Create an access token which we will sign and return to the client,
-    // containing the grant we just created
-    const token = new AccessToken(accountSid, twilioApiKey, twilioApiSecret);
-    token.addGrant(chatGrant);
-    token.identity = identity;
-
-    // Serialize the token to a JWT string
-    let jwt = token.toJwt();
-    return res.json({ success: true, token: jwt });
-}
-
-// exports.privateMeeting = function(req, res) {
-//     Classroom.find({}, function(err, data) {
-//     	if(err) {
-//     		return res.json({success: false, status: 101});
-//     	} else if(data != undefined && data != null) {
-//     		return res.json({success: true, data: data, status: 102});
-//     	}
-//     	return res.json({ success:false, status: 103});
-//     });
-// }
-
 // exports.donate = function(req, res) {
 //     let classroomId = req.params.id;
 //     let accountId = req.account._id;
@@ -520,3 +439,32 @@ exports.generateChatAccessToken = function(req, res) {
 //         }
 //     });
 // }
+
+exports.getAllParticipants = function(req, res) {
+    let roomId = req.body.id;
+    return twClient.rooms(roomId).participants
+        .list()
+        .then((participants) => {
+            console.log(participants)
+            return res.json({ success: true, status: 200, data: participants })
+        }).catch(err => {
+            return res.json({ success: true, status: 400, msg: 'failed' })
+        })
+}
+
+exports.subscribeAll = function(req, res) {
+    let roomId = req.body.id;
+    let pId = req.body.pid;
+    twClient.rooms(roomId).participants.get(pId)
+        .subscribeRules.update({
+            rules: [
+                { "type": "include", "all": true }
+            ]
+        })
+        .then(result => {
+            return res.json({ success: true, status: 200, msg: "subscribed" });
+        })
+        .catch(error => {
+            return res.json({ success: falsse, status: 400, msg: 'subscription failed' })
+        });
+}
