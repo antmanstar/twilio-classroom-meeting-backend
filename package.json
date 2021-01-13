@@ -8,7 +8,8 @@
     },
     "scripts": {
         "test": "mocha --timeout 15000 || true",
-        "start": "node server.js"
+        "start": "node server.js",
+        "staging": "export NODE_ENV=test && node server.js"
     },
     "author": "marcelopiomsf",
     "license": "ISC",

@@ -23,7 +23,7 @@ let parseArgs = require('minimist')
 
 let port;
 
-if (process.env.NODE_ENV == 'dev' || true) {
+if (process.env.NODE_ENV == 'dev') {
     var args = parseArgs(process.argv.slice(2), { port: 'port' });
     if (args.port == undefined) {
         throw new Error("To start microservice, must define PORT argument. --port <num>");
