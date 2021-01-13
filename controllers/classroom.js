@@ -337,7 +337,10 @@ exports.roomCallback = function(req, res) {
             tw.chat.services(serviceId)
                 .channels
                 .list({ uniqueName: req.body.RoomSid })
-                .then(channels => channels[0].remove())
+                .then(channels => {
+                    console.log("KOK", channels[0]);
+                    channels[0].remove();
+                })
         }
         if (req.body.StatusCallbackEvent == "room-created") { // room-created callback
             console.log("room-created")
