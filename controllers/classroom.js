@@ -334,13 +334,13 @@ exports.roomCallback = function(req, res) {
         if (req.body.StatusCallbackEvent == "room-ended") { // room-ended callback
             console.log("room-ended");
             Classroom.remove({ roomSID: req.body.RoomSid }, function(err, data) {});
-            tw.chat.services(serviceId)
-                .channels
-                .list({ uniqueName: req.body.RoomSid })
-                .then(channels => {
-                    console.log("KOK", channels[0]);
-                    channels[0].remove();
-                })
+            // tw.chat.services(serviceId)
+            //     .channels
+            //     .list({ uniqueName: req.body.RoomSid })
+            //     .then(channels => {
+            //         console.log("KOK", channels[0]);
+            //         channels[0].remove();
+            //     })
         }
         if (req.body.StatusCallbackEvent == "room-created") { // room-created callback
             console.log("room-created")
