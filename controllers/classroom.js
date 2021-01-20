@@ -96,7 +96,7 @@ exports.createUniversityClassroom = function(req, res) {
         newRoom.members = []; // all the participants who are in the current classroom
 
         twClient.rooms.create({ // create the room
-                uniqueName: newRoom.uniqueName + accountId,
+                uniqueName: newRoom.uniqueName + accountId + universityId,
                 statusCallback: newRoom.statusCallback,
                 recordParticipantsOnConnect: newRoom.recordParticipantsOnConnect,
             })
