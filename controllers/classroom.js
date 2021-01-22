@@ -96,7 +96,7 @@ exports.createUniversityClassroom = function(req, res) {
         newRoom.members = []; // all the participants who are in the current classroom
 
         twClient.rooms.create({ // create the room
-                uniqueName: newRoom.uniqueName,
+                uniqueName: newRoom.uniqueName + accountId + universityId,
                 statusCallback: newRoom.statusCallback,
                 recordParticipantsOnConnect: newRoom.recordParticipantsOnConnect,
             })
@@ -248,7 +248,7 @@ exports.leaveClassroom = function(req, res) {
         } else if (data != undefined && data != null) {
             let classroom = data;
 
-            classroom.members = lodash.difference(classroom.members, [accountId]); // participant remove
+            classroom.members = lodash.difference(classroom.members, [accountId]); // participnat remove
             classroom.save(function(err, doc) {
                 if (err)
                     return res.json({ success: false, status: 500, msg: "DB error" });
@@ -327,16 +327,20 @@ exports.getComposedMedia = function(req, res) {
         });
 }
 
+
 // callbacks for the room event
 exports.roomCallback = function(req, res) {
     if (req.body.StatusCallbackEvent != undefined) {
         if (req.body.StatusCallbackEvent == "room-ended") { // room-ended callback
             console.log("room-ended");
             Classroom.remove({ roomSID: req.body.RoomSid }, function(err, data) {});
-            tw.chat.services(serviceId)
-                .channels
-                .list({ uniqueName: req.body.RoomSid })
-                .then(channels => channels[0].remove())
+            // tw.chat.services(serviceId)
+            //     .channels
+            //     .list({ uniqueName: req.body.RoomSid })
+            //     .then(channels => {
+            //         console.log("KOK", channels[0]);
+            //         channels[0].remove();
+            //     })
         }
         if (req.body.StatusCallbackEvent == "room-created") { // room-created callback
             console.log("room-created")
@@ -404,10 +408,11 @@ exports.generateAccessToken = function(req, res) {
     const VideoGrant = AccessToken.VideoGrant;
     const identity = req.account._id;
     const roomName = req.params.roomName;
+    const universityId = req.params.universityId;
 
     // Create Video Grant
     const videoGrant = new VideoGrant({
-        room: roomName,
+        room: roomName + identity + universityId,
     });
 
     // Create an access token which we will sign and return to the client,
