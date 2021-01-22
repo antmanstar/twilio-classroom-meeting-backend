@@ -408,10 +408,11 @@ exports.generateAccessToken = function(req, res) {
     const VideoGrant = AccessToken.VideoGrant;
     const identity = req.account._id;
     const roomName = req.params.roomName;
+    const universityId = req.params.universityId;
 
     // Create Video Grant
     const videoGrant = new VideoGrant({
-        room: roomName + "_" + identity,
+        room: roomName + identity + universityId,
     });
 
     // Create an access token which we will sign and return to the client,
