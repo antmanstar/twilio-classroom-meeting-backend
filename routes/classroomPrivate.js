@@ -593,7 +593,7 @@ router.get('/composition/:id/', classroom_controller.getComposedMedia);
  *    }
  *    
  */
-router.get('/classroom/:roomName/token', classroom_controller.generateAccessToken);
+router.get('/classroom/:roomName/:universityId/token', classroom_controller.generateAccessToken);
 
 router.get('/participants', classroom_controller.getAllParticipants);
 router.put('/subscribe', classroom_controller.subscribeAll);
