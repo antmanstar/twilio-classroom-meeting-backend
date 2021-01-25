@@ -412,7 +412,7 @@ exports.generateAccessToken = function(req, res) {
 
     // Create Video Grant
     const videoGrant = new VideoGrant({
-        room: roomName
+        // room: roomName
     });
 
     // Create an access token which we will sign and return to the client,
