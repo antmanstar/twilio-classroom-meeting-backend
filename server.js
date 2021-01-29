@@ -48,10 +48,15 @@ if (process.env.NODE_ENV == 'dev' || true) {
 let config = require('config');
 
 /* Database options */
-let options = { useNewUrlParser: true, useUnifiedTopology: true };
+let options = {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useCreateIndex: true,
+    // useMongoClient: true
+};
 
 /* Database */
-mongoose.connect(config.DBHost, options)
+mongoose.connect(config.DBHost, options);
 let db = mongoose.connection;
 
 /* Mongoose fix depreciation promise */
