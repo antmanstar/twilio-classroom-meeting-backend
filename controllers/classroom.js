@@ -1,4 +1,6 @@
 let Classroom = require('../models/Classroom.js');
+let Assignment = require('../models/Assignment.js');
+
 let lodash = require('lodash');
 
 let twilioOptions = require('../config/twilio.js');
@@ -30,7 +32,7 @@ exports.getAllClassrooms = function(req, res) {
 exports.delAllClassrooms = function(req, res) {
     Classroom.remove({}, function(err, data) { // remove room
         if (err) {
-            return res.json({ success: false, status: 500, msg: "DB error" });
+            return res.json({ success: false, status: 500, msg: err });
         } else if (data != undefined && data != null) {
             return res.json({ success: true, data: data, status: 200 });
         } else {
@@ -79,9 +81,12 @@ exports.getAllClassroomsByUniversity = function(req, res) {
 exports.createUniversityClassroom = function(req, res) {
     let mobile = req.body.mobile;
     let accountId = req.account._id;
-    let universityId = req.body.id;
+    let universityId = req.body.uid;
     let uniqueName = req.body.roomName
     let privilege = req.body.privilege;
+    let teacherId = req.body.tid;
+    let markAttendance = req.body.markAttendance;
+
     if (privilege >= 99) { // only administrator can creat the room
         let newRoom = new Classroom();
 
@@ -90,6 +95,8 @@ exports.createUniversityClassroom = function(req, res) {
         newRoom.status = "in-progress"; // setting up the current room status in progrss means that the room is alive
         newRoom.universityId = universityId; // university id
         newRoom.accountSid = accountId; // user id (student or company id)
+        newRoom.teacher = teacherId;
+        newRoom.markAttendance = markAttendance;
         newRoom.statusCallback = `https://${req.headers.host}/classroom/${webhookRoomCallbackUrl}`; // setting up call back url for the classroom event
         newRoom.minPrivilege = 0; // minimum privilege of the user who can join to the classroom (not used now and every body who logged can join)
         newRoom.type = "group"; // classroom type (there are 3 types ['group', 'small group', 'peer to peer])
@@ -104,7 +111,7 @@ exports.createUniversityClassroom = function(req, res) {
                 newRoom.roomSID = room.sid;
                 newRoom.save(function(err, doc) { // saving created room to the db
                     if (err)
-                        return res.json({ success: false, status: 500, msg: "DB error" });
+                        return res.json({ success: false, status: 500, msg: err });
                     else if (doc != undefined && doc != null) {
                         if (mobile == true) { // in case of mobile, create channel, too 
                             tw.chat.services(serviceId)
@@ -210,10 +217,10 @@ exports.endClassroom = function(req, res) {
     }
 }
 
-// A participant joins to the room
-exports.joinClassroom = function(req, res) {
-    let classroomId = req.params.id;
-    let accountId = req.account._id;
+// add student to the classroom
+exports.addStudents = function(req, res) {
+    let classroomId = req.params.cid;
+    let studentList = req.body.slist;
 
     Classroom.findOne({ roomSID: classroomId }, function(err, data) { // finding the room
         if (err) {
@@ -222,7 +229,19 @@ exports.joinClassroom = function(req, res) {
             if (data.status == "completed")
                 return res.json({ success: false, status: 403, msg: "Room is completed!" });
             let classroom = data;
-            classroom.members = lodash.union([accountId], classroom.members); // participant adding
+            studentList.forEach(student => {
+                let filteredArry = classroom.members.filter(member => {
+                    return member.accountId == student.accountId
+                })
+                if (filteredArry.length == 0) {
+                    classroom.members.push({
+                        accountId: student.accountId,
+                        attendence: [],
+                        submission: [],
+                        finalGrade: 0
+                    })
+                }
+            })
             classroom.save(function(err, doc) {
                 if (err)
                     return res.json({ success: false, status: 500, msg: "DB error" });
@@ -237,18 +256,29 @@ exports.joinClassroom = function(req, res) {
     });
 }
 
-// A participant leaves the classroom
-exports.leaveClassroom = function(req, res) {
-    let classroomId = req.params.id;
-    let accountId = req.account._id;
+// remove student from the classroom
+exports.removeStudents = function(req, res) {
+    let classroomId = req.params.cid;
+    let studentList = req.body.slist;
 
     Classroom.findOne({ roomSID: classroomId }, function(err, data) { // finding the room
         if (err) {
-            return res.json({ success: false, status: 500, msg: "DB error" });
+            return res.json({ success: false, status: 500, msg: err });
         } else if (data != undefined && data != null) {
             let classroom = data;
 
-            classroom.members = lodash.difference(classroom.members, [accountId]); // participnat remove
+            studentList.forEach(student => {
+                let filteredArry = classroom.members.filter(member => {
+                    return member.accountId == student.accountId
+                })
+
+                if (filteredArry.length !== 0) {
+                    classroom.members = classroom.members.filter(m => {
+                        return m.accountId !== student.accountId
+                    })
+                }
+            })
+
             classroom.save(function(err, doc) {
                 if (err)
                     return res.json({ success: false, status: 500, msg: "DB error" });

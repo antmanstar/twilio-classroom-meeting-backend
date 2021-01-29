@@ -259,14 +259,16 @@ router.post('/university', classroom_controller.createUniversityClassroom);
 router.delete('/universtiy/:id/all', classroom_controller.delAllClassroomsByUniversity);
 
 /**
-  Join Classroom
+  Add Student
 **/
 
 /**
- * @api {POST} /:id/join Join into the given classroom by roomID
- * @apiName joinClassroom
+ * @api {POST} /:id/join add student to the classroom
+ * @apiName addStudent
  * @apiGroup Classroom
  *
+ * @apiParam {String} :cid Classroom id.
+ * @apiParam {String} :sid Student id.
  * @apiParam {Number} :id Classroom id.
  *
  * @apiSuccess {json} Classroom 
@@ -304,7 +306,7 @@ router.delete('/universtiy/:id/all', classroom_controller.delAllClassroomsByUniv
  *       "msg": "Not Found"
  *    }  
  */
-router.post('/:id/join', classroom_controller.joinClassroom);
+router.post('/:cid/students/add', classroom_controller.addStudents);
 
 /**
   Leave Classroom
@@ -352,7 +354,7 @@ router.post('/:id/join', classroom_controller.joinClassroom);
  *       "msg": "Not Found"
  *    }  
  */
-router.delete('/:id/join', classroom_controller.leaveClassroom);
+router.post('/:cid/students/remove', classroom_controller.removeStudents);
 
 /**
   End Classroom
