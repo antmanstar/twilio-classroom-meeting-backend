@@ -28,7 +28,7 @@ let ClassroomSchema = new Schema({
     status: { // The status of the room. Can be: in-progress, failed, or completed
         type: String
     },
-    minPrivilege: { // minimum privilege
+    minPrivilege: { // minimum privilege of participant who can join to the classroom
         type: Number,
         required: true
     },
@@ -64,9 +64,36 @@ let ClassroomSchema = new Schema({
     url: {
         type: String
     },
-    members: {
-        type: Array,
-    }
+    teacher: {
+        type: String,
+    },
+    markAttendance: {
+        type: Boolean
+    },
+    weightAge: {
+        type: Number,
+        default: 0
+    },
+    schedule: [{
+        days: {
+            type: String
+        },
+        startTime: {
+            type: Date
+        },
+        endTime: {
+            type: Date
+        }
+    }],
+    members: [{
+        accountId: {
+            type: String
+        },
+        finalGrade: {
+            type: Number,
+            default: 0
+        },
+    }]
 });
 
 // Sets the createdAt parameter equal to the current time
