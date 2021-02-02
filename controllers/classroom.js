@@ -84,6 +84,7 @@ exports.createUniversityClassroom = function(req, res) {
     let privilege = req.body.privilege;
     let teacherId = req.body.tid;
     let markAttendance = req.body.markAttendance;
+    let schedule = req.body.schedule;
 
     if (privilege >= 99) { // only administrator can creat the room
         let newRoom = new Classroom();
@@ -95,6 +96,7 @@ exports.createUniversityClassroom = function(req, res) {
         newRoom.accountSid = accountId; // user id (student or company id)
         newRoom.teacher = teacherId;
         newRoom.markAttendance = markAttendance;
+        newRoom.schedule = schedule;
         newRoom.statusCallback = `https://${req.headers.host}/classroom/${webhookRoomCallbackUrl}`; // setting up call back url for the classroom event
         newRoom.minPrivilege = 0; // minimum privilege of the user who can join to the classroom (not used now and every body who logged can join)
         newRoom.type = "group"; // classroom type (there are 3 types ['group', 'small group', 'peer to peer])
