@@ -15,7 +15,8 @@ let submissionSchema = new Schema({
   },
   file: String,
   grades: String,
-  total_marks: String
+  total_marks: String,
+  status: { type: Boolean, default: true }
 });
 
 // Sets the createdAt parameter equal to the current time

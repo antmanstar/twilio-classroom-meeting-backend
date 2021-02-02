@@ -135,10 +135,207 @@ function deleteAssignmentById(req, res) {
     });
 }
 
+/**
+ * Api to upload submission for assignment
+ * @param {Object} req , request object
+ * @param {Object} res , response object
+ */
+function uploadSubmission(req, res) {
+  let {
+    assignment_id,
+    submitted_date = new Date(),
+    title,
+    user_id,
+    file
+  } = req.body;
+  if (!assignment_id) {
+    return res.json({
+      success: false,
+      status: 400,
+      msg: "Assignment id is required"
+    });
+  } else if (!title) {
+    return res.json({
+      success: false,
+      status: 400,
+      msg: "Title is required"
+    });
+  } else if (!user_id) {
+    return res.json({
+      success: false,
+      status: 400,
+      msg: "User id is required"
+    });
+  } else if (!file) {
+    return res.json({
+      success: false,
+      status: 400,
+      msg: "File is required, Please submit your task."
+    });
+  }
+
+  submission_model
+    .findOne({ assignment_id, user_id })
+    .then(result => {
+      if (result) {
+        return res.json({
+          success: false,
+          status: 404,
+          msg: "Already submitted task."
+        });
+      } else {
+        let obj = { assignment_id, submitted_date, title, user_id, file };
+        let model = new submission_model(obj);
+        model
+          .save()
+          .then(result => {
+            console.log({ result });
+            return res.json({
+              success: true,
+              status: 200,
+              result
+            });
+          })
+          .catch(err => {
+            console.log({ err });
+            return res.json({
+              success: false,
+              status: 400,
+              msg: "Internal server error."
+            });
+          });
+      }
+    })
+    .catch(err => {
+      console.log({ err });
+      return res.json({
+        success: false,
+        status: 400,
+        msg: "Internal server error."
+      });
+    });
+}
+
+/**
+ * Api to fetch submission from id
+ * @param {Object} req , request object
+ * @param {Object} res , response object
+ */
+function fetchSubmissionfromId(req, res) {
+  let { id } = req.params;
+
+  submission_model
+    .findById(id)
+    .then(result => {
+      console.log({ result });
+      return res.json({
+        success: true,
+        status: 200,
+        result
+      });
+    })
+    .catch(err => {
+      console.log({ err });
+      return res.json({
+        success: false,
+        status: 400,
+        msg: "Internal server error."
+      });
+    });
+}
+
+/**
+ * Api to fetch all submissions from assignment id
+ * @param {Object} req , request object
+ * @param {Object} res , response object
+ */
+function fetchSubmissionfromAssignmentId(req, res) {
+  let { id } = req.params;
+
+  submission_model
+    .find({ assignment_id: id, status: true })
+    .then(result => {
+      console.log({ result });
+      return res.json({
+        success: true,
+        status: 200,
+        result
+      });
+    })
+    .catch(err => {
+      console.log({ err });
+      return res.json({
+        success: false,
+        status: 400,
+        msg: "Internal server error."
+      });
+    });
+}
+
+/**
+ * Api to delete  submissions from submission id
+ * @param {Object} req , request object
+ * @param {Object} res , response object
+ */
+function deleteSubmission(req, res) {
+  let { id } = req.params;
+
+  submission_model
+    .findByIdAndUpdate(id, { $set: { status: false } }, { new: true })
+    .then(result => {
+      console.log({ result });
+      return res.json({
+        success: true,
+        status: 200,
+        result
+      });
+    })
+    .catch(err => {
+      console.log({ err });
+      return res.json({
+        success: false,
+        status: 400,
+        msg: "Internal server error."
+      });
+    });
+}
+
+/**
+ * Api to edit  submissions from submission id
+ * @param {Object} req , request object
+ * @param {Object} res , response object
+ */
+function editSubmission(req, res) {
+  let { id } = req.params;
+
+  submission_model
+    .findByIdAndUpdate(id, { $set: req.body }, { new: true })
+    .then(result => {
+      console.log({ result });
+      return res.json({
+        success: true,
+        status: 200,
+        result
+      });
+    })
+    .catch(err => {
+      console.log({ err });
+      return res.json({
+        success: false,
+        status: 400,
+        msg: "Internal server error."
+      });
+    });
+}
+
 module.exports = {
   createAssignment,
   getAllAssignmentFromClass,
   getAssignmentById,
-  deleteAssignmentById
-  //   uploadSubmission
+  deleteAssignmentById,
+  uploadSubmission,
+  fetchSubmissionfromId,
+  fetchSubmissionfromAssignmentId,
+  editSubmission,
+  deleteSubmission
 };

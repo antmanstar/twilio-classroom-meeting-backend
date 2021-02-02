@@ -621,6 +621,13 @@ router.delete(
 );
 
 //submission id
-// router.post("/classroom/uploadSubmission", service.uploadSubmission);
+router.post("/classroom/uploadSubmission", service.uploadSubmission);
+router.get("/classroom/fetchSubmission/:id", service.fetchSubmissionfromId);
+router.get(
+  "/classroom/fetchAllSubmissions/:id",
+  service.fetchSubmissionfromAssignmentId
+);
+router.delete("/classroom/deleteSubmission/:id", service.deleteSubmission);
+router.put("/classroom/editSubmission/:id", service.editSubmission);
 
 module.exports = router;
