@@ -597,7 +597,7 @@ router.get('/composition/:id/', classroom_controller.getComposedMedia);
  */
 router.get('/classroom/:roomName/token', classroom_controller.generateAccessToken);
 
-router.get('/participants', classroom_controller.getAllParticipants);
+router.get('/classroom/:cid/participants', classroom_controller.getAllParticipants);
 router.put('/subscribe', classroom_controller.subscribeAll);
 router.get('/attendance/classroom/:cid', classroom_controller.getAttendanceByClassroom);
 router.post('/attendance', classroom_controller.createAttendance);

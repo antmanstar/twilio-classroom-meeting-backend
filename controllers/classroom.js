@@ -644,7 +644,7 @@ exports.generateAccessToken = function(req, res) {
 // }
 
 exports.getAllParticipants = function(req, res) {
-    let roomId = req.body.id;
+    let roomId = req.params.cid;
     return twClient.rooms(roomId).participants
         .list()
         .then((participants) => {
