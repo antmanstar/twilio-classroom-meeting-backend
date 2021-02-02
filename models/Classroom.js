@@ -70,6 +70,10 @@ let ClassroomSchema = new Schema({
     markAttendance: {
         type: Boolean
     },
+    weightAge: {
+        type: Number,
+        default: 0
+    },
     schedule: [{
         days: {
             type: String
@@ -81,29 +85,10 @@ let ClassroomSchema = new Schema({
             type: Date
         }
     }],
-    assignments: [{
-        assignmentId: { type: String }
-    }],
     members: [{
         accountId: {
             type: String
         },
-        attendence: [{
-            date: { type: Date },
-            present: { type: Boolean },
-            timeIn: { type: Date },
-            timeOut: { type: Date },
-            timeDuration: { type: Number }
-        }],
-        submission: [{
-            assignmentId: { type: String },
-            date: { type: Date },
-            submittedDate: { type: Date },
-            title: { type: String },
-            file: { type: String },
-            grade: { type: Number },
-            totalMark: { type: Number }
-        }],
         finalGrade: {
             type: Number,
             default: 0

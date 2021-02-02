@@ -52,7 +52,8 @@ let options = {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     useCreateIndex: true,
-    // useMongoClient: true
+    useFindAndModify: false
+        // useMongoClient: true
 };
 
 /* Database */

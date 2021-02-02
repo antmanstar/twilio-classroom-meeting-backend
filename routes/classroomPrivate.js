@@ -599,5 +599,10 @@ router.get('/classroom/:roomName/token', classroom_controller.generateAccessToke
 
 router.get('/participants', classroom_controller.getAllParticipants);
 router.put('/subscribe', classroom_controller.subscribeAll);
+router.get('/attendance/classroom/:cid', classroom_controller.getAttendanceByClassroom);
+router.post('/attendance', classroom_controller.createAttendance);
+router.put('/attendance/:aid', classroom_controller.updateAttendance);
+router.post('/attendance/session', classroom_controller.addSessionToAttendance);
+router.put('/classroom/:cid/', classroom_controller.updateClassroom);
 
 module.exports = router;
