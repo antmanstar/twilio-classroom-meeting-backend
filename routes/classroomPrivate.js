@@ -306,7 +306,7 @@ router.delete('/universtiy/:id/all', classroom_controller.delAllClassroomsByUniv
  *       "msg": "Not Found"
  *    }  
  */
-router.post('/:cid/students/add', classroom_controller.addStudents);
+router.post("/:id/join", classroom_controller.joinClassroom);
 
 /**
   Leave Classroom
@@ -354,7 +354,7 @@ router.post('/:cid/students/add', classroom_controller.addStudents);
  *       "msg": "Not Found"
  *    }  
  */
-router.post('/:cid/students/remove', classroom_controller.removeStudents);
+router.delete("/:id/join", classroom_controller.leaveClassroom);
 
 /**
   End Classroom
@@ -403,7 +403,7 @@ router.post('/:cid/students/remove', classroom_controller.removeStudents);
  *       "msg": "You are not a Administrator"
  *    }  
  */
-router.delete('/end', classroom_controller.endClassroom);
+router.delete("/end", classroom_controller.endClassroom);
 
 
 /**
@@ -595,14 +595,12 @@ router.get('/composition/:id/', classroom_controller.getComposedMedia);
  *    }
  *    
  */
-router.get('/classroom/:roomName/token', classroom_controller.generateAccessToken);
+router.get(
+  "/classroom/:roomName/token",
+  classroom_controller.generateAccessToken
+);
 
-router.get('/classroom/:cid/participants', classroom_controller.getAllParticipants);
-router.put('/subscribe', classroom_controller.subscribeAll);
-router.get('/attendance/classroom/:cid', classroom_controller.getAttendanceByClassroom);
-router.post('/attendance', classroom_controller.createAttendance);
-router.put('/attendance/:aid', classroom_controller.updateAttendance);
-router.post('/attendance/session', classroom_controller.addSessionToAttendance);
-router.put('/classroom/:cid/', classroom_controller.updateClassroom);
+router.get("/participants", classroom_controller.getAllParticipants);
+router.put("/subscribe", classroom_controller.subscribeAll);
 
 module.exports = router;
