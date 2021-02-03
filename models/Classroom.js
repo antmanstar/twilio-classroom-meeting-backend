@@ -64,36 +64,9 @@ let ClassroomSchema = new Schema({
     url: {
         type: String
     },
-    teacher: {
-        type: String,
-    },
-    markAttendance: {
-        type: Boolean
-    },
-    weightAge: {
-        type: Number,
-        default: 0
-    },
-    schedule: [{
-        days: {
-            type: String
-        },
-        startTime: {
-            type: Date
-        },
-        endTime: {
-            type: Date
-        }
-    }],
-    members: [{
-        accountId: {
-            type: String
-        },
-        finalGrade: {
-            type: Number,
-            default: 0
-        },
-    }]
+    members: {
+        type: Array,
+    }
 });
 
 // Sets the createdAt parameter equal to the current time
