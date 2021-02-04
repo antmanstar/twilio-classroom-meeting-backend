@@ -1,3 +1,3 @@
 {
-    "DBHost": "mongodb://localhost:27017/classroom"
+    "DBHost": "mongodb+srv://welove:college2020@networkbase.4wovs.mongodb.net/networkbase-main"
 }
