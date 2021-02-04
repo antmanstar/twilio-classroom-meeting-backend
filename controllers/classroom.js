@@ -175,9 +175,9 @@ exports.getClassroomsByAdmin = function(req, res) {
 
 // get the classroom by room sid
 exports.getClassroomByRoomId = function(req, res) {
-    let roomId = req.params.id;
+    let roomId = req.params.cid;
 
-    Classroom.findOne({ roomSID: roomId }, function(err, data) { // finding room
+    Classroom.findOne({ _id: roomId }, function(err, data) { // finding room
         if (err)
             return res.json({ success: false, status: 500, msg: "DB error" });
         else if (data != undefined && data != null)

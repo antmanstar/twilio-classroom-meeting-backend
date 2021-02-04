@@ -99,7 +99,7 @@ router.get('/university/:id', classroom_controller.getClassroomsByAdmin);
  *       "msg": "Not Found"
  *    }  
  */
-router.get('/classroom/:id', classroom_controller.getClassroomByRoomId);
+router.get('/classroom/:cid', classroom_controller.getClassroomByRoomId);
 
 
 /**
