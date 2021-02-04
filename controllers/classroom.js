@@ -115,16 +115,18 @@ exports.createUniversityClassroom = function(req, res) {
 exports.createTwilioClassroom = function(req, res) {
     let cid = req.body.cid;
 
-    Classroom.find({ _id: cid }, function(err, data) { // finding room
+    Classroom.findOne({ _id: cid }, function(err, data) { // finding room
         if (err)
             return res.json({ success: false, status: 500, msg: "DB error" });
         else if (data != undefined && data != null) {
+            console.log("DATA", data)
             twClient.rooms.create({ // create the room
-                    uniqueName: data.uniqueName + data.accountId + data.universityId,
+                    uniqueName: data.uniqueName + data.accountSid + data.universityId,
                     statusCallback: data.statusCallback,
                     recordParticipantsOnConnect: true,
                 })
                 .then(room => { // creation success
+                    console.log("HELELE")
                     let classroom = data;
                     classroom.roomSID = room.sid;
                     classroom.save(function(err, doc) { // saving created room to the db
@@ -591,7 +593,7 @@ exports.roomCallback = function(req, res) {
     if (req.body.StatusCallbackEvent != undefined) {
         if (req.body.StatusCallbackEvent == "room-ended") { // room-ended callback
             console.log("room-ended");
-            Classroom.remove({ roomSID: req.body.RoomSid }, function(err, data) {});
+            // Classroom.remove({ roomSID: req.body.RoomSid }, function(err, data) {});
             // tw.chat.services(serviceId)
             //     .channels
             //     .list({ uniqueName: req.body.RoomSid })
