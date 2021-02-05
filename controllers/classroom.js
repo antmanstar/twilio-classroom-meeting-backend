@@ -119,14 +119,12 @@ exports.createTwilioClassroom = function(req, res) {
         if (err)
             return res.json({ success: false, status: 500, msg: "DB error" });
         else if (data != undefined && data != null) {
-            console.log("DATA", data)
             twClient.rooms.create({ // create the room
                     uniqueName: data.uniqueName + data.accountSid + data.universityId,
                     statusCallback: data.statusCallback,
                     recordParticipantsOnConnect: true,
                 })
                 .then(room => { // creation success
-                    console.log("HELELE")
                     let classroom = data;
                     classroom.roomSID = room.sid;
                     classroom.save(function(err, doc) { // saving created room to the db
@@ -218,7 +216,7 @@ exports.updateClassroom = function(req, res) {
     }
 
     if (privilege >= 99) { // only administrator can creat the room
-        Classroom.findOneAndUpdate({ "roomSID": roomId }, classroomUpdates, { new: true }, function(err, doc) {
+        Classroom.findOneAndUpdate({ _id: roomId }, classroomUpdates, { new: true }, function(err, doc) {
             if (err) {
                 return res.json({ success: false, status: 500, err: err.message });
             } else if (doc != undefined && doc != null) {
@@ -454,12 +452,10 @@ exports.addStudents = function(req, res) {
     let classroomId = req.params.cid;
     let studentList = req.body.slist;
 
-    Classroom.findOne({ roomSID: classroomId }, function(err, data) { // finding the room
+    Classroom.findOne({ _id: classroomId }, function(err, data) { // finding the room
         if (err) {
             return res.json({ success: false, status: 500, msg: "DB error" });
         } else if (data != undefined && data != null) {
-            if (data.status == "completed")
-                return res.json({ success: false, status: 403, msg: "Room is completed!" });
             let classroom = data;
             studentList.forEach(student => {
                 let filteredArry = classroom.members.filter(member => {
@@ -491,7 +487,7 @@ exports.removeStudents = function(req, res) {
     let classroomId = req.params.cid;
     let studentList = req.body.slist;
 
-    Classroom.findOne({ roomSID: classroomId }, function(err, data) { // finding the room
+    Classroom.findOne({ _id: classroomId }, function(err, data) { // finding the room
         if (err) {
             return res.json({ success: false, status: 500, msg: err });
         } else if (data != undefined && data != null) {
