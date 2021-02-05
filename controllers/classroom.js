@@ -135,7 +135,7 @@ exports.createTwilioClassroom = function(req, res) {
                                 .channels
                                 .create({
                                     friendlyName: "welovechannel",
-                                    uniqueName: data._id,
+                                    uniqueName: classroom._id,
                                     type: 'public',
                                 })
                                 .then(channel => {
