@@ -98,7 +98,8 @@ router.get("/university/:id", classroom_controller.getClassroomsByAdmin);
  *       "msg": "Not Found"
  *    }
  */
-router.get("/classroom/:id", classroom_controller.getClassroomByRoomId);
+router.get('/classroom/:cid', classroom_controller.getClassroomByRoomId);
+
 
 /**
   Get Classrooms
@@ -263,14 +264,16 @@ router.delete(
 );
 
 /**
-  Join Classroom
+  Add Student
 **/
 
 /**
- * @api {POST} /:id/join Join into the given classroom by roomID
- * @apiName joinClassroom
+ * @api {POST} /:id/join add student to the classroom
+ * @apiName addStudent
  * @apiGroup Classroom
  *
+ * @apiParam {String} :cid Classroom id.
+ * @apiParam {String} :sid Student id.
  * @apiParam {Number} :id Classroom id.
  *
  * @apiSuccess {json} Classroom
@@ -308,7 +311,7 @@ router.delete(
  *       "msg": "Not Found"
  *    }
  */
-router.post("/:id/join", classroom_controller.joinClassroom);
+router.post('/:cid/students/add', classroom_controller.addStudents);
 
 /**
   Leave Classroom
@@ -356,7 +359,7 @@ router.post("/:id/join", classroom_controller.joinClassroom);
  *       "msg": "Not Found"
  *    }
  */
-router.delete("/:id/join", classroom_controller.leaveClassroom);
+router.post('/:cid/students/remove', classroom_controller.removeStudents);
 
 /**
   End Classroom
@@ -599,33 +602,39 @@ router.get("/composition/:id/", classroom_controller.getComposedMedia);
  *    }
  *
  */
-router.get(
-  "/classroom/:roomName/token",
-  classroom_controller.generateAccessToken
-);
+router.get('/classroom/:roomName/token', classroom_controller.generateAccessToken);
+router.post('/twclassroom', classroom_controller.createTwilioClassroom);
 
-router.get("/participants", classroom_controller.getAllParticipants);
-router.put("/subscribe", classroom_controller.subscribeAll);
+
+router.get('/classroom/:cid/participants', classroom_controller.getAllParticipants);
+router.put('/subscribe', classroom_controller.subscribeAll);
+router.get('/attendance/classroom/:cid', classroom_controller.getAttendancesByClassroom);
+router.get('/attendance/classroom/:cid/date/:date', classroom_controller.getAttendancesByClassroomAndDate);
+router.get('/attendance/classroom/:cid/student/:sid/date/:date', classroom_controller.getAttendanceByClassroomAndMemberAndDate);
+router.post('/attendance', classroom_controller.createAttendance);
+router.put('/attendance/:aid', classroom_controller.updateAttendance);
+router.post('/attendance/session', classroom_controller.addSessionToAttendance);
+router.put('/classroom/:cid/', classroom_controller.updateClassroom);
 
 //assignment details
 router.post("/classroom/createAssignment", service.createAssignment);
 router.get("/classroom/getAllAssignments/:roomId", service.createAssignment);
 router.get(
-  "/classroom/getAssignmentById/:assignmentId",
-  service.getAssignmentById
+    "/classroom/getAssignmentById/:assignmentId",
+    service.getAssignmentById
 );
 
 router.delete(
-  "/classroom/deleteAssignment/:assignmentId",
-  service.deleteAssignmentById
+    "/classroom/deleteAssignment/:assignmentId",
+    service.deleteAssignmentById
 );
 
 //submission id
 router.post("/classroom/uploadSubmission", service.uploadSubmission);
 router.get("/classroom/fetchSubmission/:id", service.fetchSubmissionfromId);
 router.get(
-  "/classroom/fetchAllSubmissions/:id",
-  service.fetchSubmissionfromAssignmentId
+    "/classroom/fetchAllSubmissions/:id",
+    service.fetchSubmissionfromAssignmentId
 );
 router.delete("/classroom/deleteSubmission/:id", service.deleteSubmission);
 router.put("/classroom/editSubmission/:id", service.editSubmission);
