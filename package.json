@@ -15,6 +15,9 @@
     "license": "ISC",
     "dependencies": {
         "@weloveeducation/sdk": "^1.0.10",
+        "mongoose-float": "^1.0.2",
+        "mongoose-paginate": "^5.0.3",
+        "twilio": "^3.42.0",
         "bcryptjs": "^2.4.3",
         "body-parser": "^1.18.2",
         "compression": "^1.7.1",
