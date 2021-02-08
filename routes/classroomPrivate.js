@@ -618,7 +618,7 @@ router.put('/classroom/:cid/', classroom_controller.updateClassroom);
 
 //assignment details
 router.post("/classroom/createAssignment", service.createAssignment);
-router.get("/classroom/getAllAssignments/:roomId", service.createAssignment);
+router.get("/classroom/getAllAssignments/:roomId", service.getAllAssignmentFromClass);
 router.get(
     "/classroom/getAssignmentById/:assignmentId",
     service.getAssignmentById
