@@ -7,10 +7,6 @@ let bcrypt = require('bcryptjs');
 
 //classroom schema definition
 let ClassroomSchema = new Schema({
-    recordParticipantsOnConnect: {
-        type: Boolean,
-        required: true
-    },
     statusCallback: {
         type: String
     },
@@ -26,7 +22,9 @@ let ClassroomSchema = new Schema({
         title: { type: String }
     }],
     status: { // The status of the room. Can be: in-progress, failed, or completed
-        type: String
+        type: String,
+        default: 'INACTIVE',
+        enum: ["ACTIVE", "INACTIVE"]
     },
     minPrivilege: { // minimum privilege of participant who can join to the classroom
         type: Number,
@@ -55,8 +53,7 @@ let ClassroomSchema = new Schema({
         required: true
     },
     roomSID: { // The unique string that we created to identify the Room resource.
-        type: String,
-        required: true
+        type: String
     },
     maxParticipants: {
         type: Number

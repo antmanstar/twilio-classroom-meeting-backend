@@ -5,7 +5,8 @@ var twilioOptions = {
     TWILIO_IPM_SERVICE_SID: "IS66bb48c7c1354c038485dbd436b5ec10",
     TWILIO_API_KEY: "SK1a798d2be5f6c189daea5ff4e126793b",
     TWILIO_API_SECRET: "iY7eTh3rYYR4matfxuZVNKJcPRpPOBtH",
-    TWILIO_APP_NAME: "test_softwareteam"
+    TWILIO_APP_NAME: "test_softwareteam",
+    TWILIO_PUSH_CREDENTIAL_SID: "CR6612abf5db038105fc12e264cb805d2c"
 };
 
 module.exports = twilioOptions;

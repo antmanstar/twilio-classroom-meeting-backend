@@ -77,46 +77,65 @@ exports.getAllClassroomsByUniversity = function(req, res) {
 
 // create the classroom
 exports.createUniversityClassroom = function(req, res) {
-    let mobile = req.body.mobile;
     let accountId = req.account._id;
     let universityId = req.body.uid;
     let uniqueName = req.body.roomName
     let privilege = req.body.privilege;
     let teacherId = req.body.tid;
     let markAttendance = req.body.markAttendance;
+    let schedule = req.body.schedule;
 
     if (privilege >= 99) { // only administrator can creat the room
         let newRoom = new Classroom();
 
-        newRoom.recordParticipantsOnConnect = true; // if this param is true, whenever the participant(student or admistrator) join to the room, the recording is started.
         newRoom.uniqueName = uniqueName; // classroom unique name
-        newRoom.status = "in-progress"; // setting up the current room status in progrss means that the room is alive
         newRoom.universityId = universityId; // university id
         newRoom.accountSid = accountId; // user id (student or company id)
         newRoom.teacher = teacherId;
         newRoom.markAttendance = markAttendance;
+        newRoom.schedule = schedule;
         newRoom.statusCallback = `https://${req.headers.host}/classroom/${webhookRoomCallbackUrl}`; // setting up call back url for the classroom event
         newRoom.minPrivilege = 0; // minimum privilege of the user who can join to the classroom (not used now and every body who logged can join)
         newRoom.type = "group"; // classroom type (there are 3 types ['group', 'small group', 'peer to peer])
         newRoom.members = []; // all the participants who are in the current classroom
 
-        twClient.rooms.create({ // create the room
-                uniqueName: newRoom.uniqueName + accountId + universityId,
-                statusCallback: newRoom.statusCallback,
-                recordParticipantsOnConnect: newRoom.recordParticipantsOnConnect,
-            })
-            .then(room => { // creation success
-                newRoom.roomSID = room.sid;
-                newRoom.save(function(err, doc) { // saving created room to the db
-                    if (err)
-                        return res.json({ success: false, status: 500, msg: err });
-                    else if (doc != undefined && doc != null) {
-                        if (mobile == true) { // in case of mobile, create channel, too 
+        newRoom.save(function(err, doc) { // saving created room to the db
+            if (err)
+                return res.json({ success: false, status: 500, msg: err });
+            else if (doc != undefined && doc != null) {
+                return res.json({ success: true, status: 201, data: { id: doc._id, roomData: doc } });
+            } else
+                return res.json({ success: false, status: 404, msg: "Not created!" });
+        });
+    } else
+        return res.json({ success: false, status: 403, msg: "Insufficient Privilege" });
+}
+
+// create twilio classroom
+exports.createTwilioClassroom = function(req, res) {
+    let cid = req.body.cid;
+
+    Classroom.findOne({ _id: cid }, function(err, data) { // finding room
+        if (err)
+            return res.json({ success: false, status: 500, msg: "DB error" });
+        else if (data != undefined && data != null) {
+            twClient.rooms.create({ // create the room
+                    uniqueName: data.uniqueName + data.accountSid + data.universityId,
+                    statusCallback: data.statusCallback,
+                    recordParticipantsOnConnect: true,
+                })
+                .then(room => { // creation success
+                    let classroom = data;
+                    classroom.roomSID = room.sid;
+                    classroom.save(function(err, doc) { // saving created room to the db
+                        if (err)
+                            return res.json({ success: false, status: 500, msg: err });
+                        else if (doc != undefined && doc != null) {
                             tw.chat.services(serviceId)
                                 .channels
                                 .create({
                                     friendlyName: "welovechannel",
-                                    uniqueName: room.sid,
+                                    uniqueName: doc["_id"],
                                     type: 'public',
                                 })
                                 .then(channel => {
@@ -124,21 +143,18 @@ exports.createUniversityClassroom = function(req, res) {
                                 }).catch(message => {
                                     return res.json({ success: false, status: 400, msg: message })
                                 })
-                        } else {
-                            return res.json({ success: true, status: 201, data: { id: doc._id, sid: room.sid, roomData: doc } });
-                        }
-                    } else
-                        return res.json({ success: false, status: 404, msg: "Not created!" });
+                        } else
+                            return res.json({ success: false, status: 404, msg: "Not created!" });
+                    });
+                })
+                .catch(message => { // creation fail
+                    return res.json({ success: false, status: 400, msg: twErrorDic[message.code] })
                 });
-
-            })
-            .catch(message => { // creation fail
-                console.log(message)
-                res.json({ success: false, status: 400, msg: twErrorDic[message.code] })
-            });
-    } else
-        return res.json({ success: false, status: 403, msg: "Insufficient Privilege" });
+        } else
+            return res.json({ success: false, status: 404, msg: "Not Found" });
+    });
 }
+
 
 // get all the classrooms by room creater and university id.
 exports.getClassroomsByAdmin = function(req, res) {
@@ -157,9 +173,9 @@ exports.getClassroomsByAdmin = function(req, res) {
 
 // get the classroom by room sid
 exports.getClassroomByRoomId = function(req, res) {
-    let roomId = req.params.id;
+    let roomId = req.params.cid;
 
-    Classroom.findOne({ roomSID: roomId }, function(err, data) { // finding room
+    Classroom.findOne({ _id: roomId }, function(err, data) { // finding room
         if (err)
             return res.json({ success: false, status: 500, msg: "DB error" });
         else if (data != undefined && data != null)
@@ -181,6 +197,7 @@ exports.updateClassroom = function(req, res) {
     let markAttendance = req.body.markAttendance;
     let weightAge = req.body.weightAge;
     let privilege = req.body.privilege;
+    let status = req.body.status;
 
     if (teacherId != undefined || teacherId != null) {
         classroomUpdates.teacherId = teacherId;
@@ -194,8 +211,12 @@ exports.updateClassroom = function(req, res) {
         classroomUpdates.weightAge = weightAge;
     }
 
+    if (status != undefined || status != null) {
+        classroomUpdates.status = status;
+    }
+
     if (privilege >= 99) { // only administrator can creat the room
-        Classroom.findOneAndUpdate({ "roomSID": roomId }, classroomUpdates, { new: true }, function(err, doc) {
+        Classroom.findOneAndUpdate({ _id: roomId }, classroomUpdates, { new: true }, function(err, doc) {
             if (err) {
                 return res.json({ success: false, status: 500, err: err.message });
             } else if (doc != undefined && doc != null) {
@@ -208,8 +229,8 @@ exports.updateClassroom = function(req, res) {
         return res.json({ success: false, status: 403, msg: "Insufficient Privilege" });
 }
 
-// get attendance data
-exports.getAttendanceByClassroom = function(req, res) {
+// get attendances array in the classroom
+exports.getAttendancesByClassroom = function(req, res) {
     let roomId = req.params.cid;
 
     Attendance.find({ classroomId: roomId }, function(err, data) {
@@ -222,9 +243,40 @@ exports.getAttendanceByClassroom = function(req, res) {
     });
 }
 
+// get attendances for all members by classroom and date
+exports.getAttendancesByClassroomAndDate = function(req, res) {
+    let roomId = req.params.cid;
+    let date = req.params.date;
+
+    Attendance.find({ classroomId: roomId, date: date }, function(err, data) {
+        if (err)
+            return res.json({ success: false, status: 500, msg: "DB error" });
+        else if (data != undefined && data != null) {
+            return res.json({ success: true, status: 200, data: data });
+        } else
+            return res.json({ success: false, status: 404, msg: "Not Found" });
+    });
+}
+
+// get attedance data by classroom, member, day
+exports.getAttendanceByClassroomAndMemberAndDate = function(req, res) {
+    let roomId = req.params.cid;
+    let date = req.params.date;
+    let accountId = req.params.sid;
+
+    Attendance.findOne({ classroomId: roomId, accountId: accountId, date: date }, function(err, data) {
+        if (err)
+            return res.json({ success: false, status: 500, msg: "DB error" });
+        else if (data != undefined && data != null) {
+            return res.json({ success: true, status: 200, data: data });
+        } else
+            return res.json({ success: false, status: 404, msg: "Not Found" });
+    });
+}
+
 // create attendance data
 exports.createAttendance = function(req, res) {
-    let { classroomId, accountId } = req.body;
+    let { classroomId, accountId, date } = req.body;
 
     if (!classroomId) {
         return res.json({
@@ -238,11 +290,18 @@ exports.createAttendance = function(req, res) {
             status: 400,
             msg: "Account id is required"
         });
+    } else if (!date) {
+        return res.json({
+            success: false,
+            status: 400,
+            msg: "date is required"
+        });
     }
 
     let attendance = new Attendance({
         classroomId,
-        accountId
+        accountId,
+        date
     });
 
     attendance.save(function(err, data) {
@@ -342,7 +401,6 @@ exports.addSessionToAttendance = function(req, res) {
     });
 }
 
-
 // A room creater end the classroom
 exports.endClassroom = function(req, res) {
     let roomId = req.body.id;
@@ -394,12 +452,10 @@ exports.addStudents = function(req, res) {
     let classroomId = req.params.cid;
     let studentList = req.body.slist;
 
-    Classroom.findOne({ roomSID: classroomId }, function(err, data) { // finding the room
+    Classroom.findOne({ _id: classroomId }, function(err, data) { // finding the room
         if (err) {
             return res.json({ success: false, status: 500, msg: "DB error" });
         } else if (data != undefined && data != null) {
-            if (data.status == "completed")
-                return res.json({ success: false, status: 403, msg: "Room is completed!" });
             let classroom = data;
             studentList.forEach(student => {
                 let filteredArry = classroom.members.filter(member => {
@@ -431,7 +487,7 @@ exports.removeStudents = function(req, res) {
     let classroomId = req.params.cid;
     let studentList = req.body.slist;
 
-    Classroom.findOne({ roomSID: classroomId }, function(err, data) { // finding the room
+    Classroom.findOne({ _id: classroomId }, function(err, data) { // finding the room
         if (err) {
             return res.json({ success: false, status: 500, msg: err });
         } else if (data != undefined && data != null) {
@@ -533,7 +589,7 @@ exports.roomCallback = function(req, res) {
     if (req.body.StatusCallbackEvent != undefined) {
         if (req.body.StatusCallbackEvent == "room-ended") { // room-ended callback
             console.log("room-ended");
-            Classroom.remove({ roomSID: req.body.RoomSid }, function(err, data) {});
+            // Classroom.remove({ roomSID: req.body.RoomSid }, function(err, data) {});
             // tw.chat.services(serviceId)
             //     .channels
             //     .list({ uniqueName: req.body.RoomSid })
@@ -644,7 +700,7 @@ exports.generateAccessToken = function(req, res) {
 // }
 
 exports.getAllParticipants = function(req, res) {
-    let roomId = req.body.id;
+    let roomId = req.params.cid;
     return twClient.rooms(roomId).participants
         .list()
         .then((participants) => {
