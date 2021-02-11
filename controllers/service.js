@@ -111,7 +111,7 @@ function deleteAssignmentById(req, res) {
   assignment_model
     .findOneAndUpdate(
       {
-        class_room_id: assignmentId
+        _id: assignmentId
       },
       {
         $set: {
