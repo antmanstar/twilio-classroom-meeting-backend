@@ -6,7 +6,9 @@ const twilioApiKey = twilioOptions.TWILIO_API_KEY;
 const twilioApiSecret = twilioOptions.TWILIO_API_SECRET;
 const serviceId = twilioOptions.TWILIO_IPM_SERVICE_SID;
 const appName = twilioOptions.TWILIO_APP_NAME;
-const pushCredentialSid = twilioOptions.TWILIO_PUSH_CREDENTIAL_SID;
+const pushCredentialSidAndroid = twilioOptions.TWILIO_PUSH_CREDENTIAL_SID_ANDROID;
+// const pushCredentialSidIos = twilioOptions.TWILIO_PUSH_CREDENTIAL_SID_IOS;
+const pushCredentialSidWeb = twilioOptions.TWILIO_PUSH_CREDENTIAL_SID_WEB;
 const AccessToken = require('twilio').jwt.AccessToken;
 const tw = require('twilio')(accountSid, authToken);
 
@@ -25,7 +27,7 @@ exports.generateChatAccessToken = function(req, res) {
         const chatGrant = new ChatGrant({
             serviceSid: serviceId,
             // endpointId: endpointId,
-            pushCredentialSid: pushCredentialSid
+            pushCredentialSid: deviceId == "android" ? pushCredentialSidAndroid : pushCredentialSidWeb
         });
 
         // Create an access token which we will sign and return to the client,
