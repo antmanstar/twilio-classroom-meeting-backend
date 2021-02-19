@@ -1,5 +1,6 @@
 let Classroom = require('../models/Classroom.js');
 let Attendance = require('../models/Attendance.js');
+let mongoose = require('mongoose');
 
 let twilioOptions = require('../config/twilio.js');
 
@@ -311,6 +312,26 @@ exports.createAttendance = function(req, res) {
             return res.json({ success: true, status: 200, data: data });
         } else
             return res.json({ success: false, status: 404, msg: "Not Found" });
+    });
+}
+
+// update attendance present 
+exports.markAttendanceList = async function(req, res) {
+    // attendance list
+    let attendances = req.body.attendances;
+
+    await Promise.all(attendances.map(async(attedance) => {
+        let attendanceUpdates = {};
+        if (attedance.present != undefined || attedance.present != null) {
+            attendanceUpdates.present = attedance.present;
+        }
+        Attendance.findOneAndUpdate({ _id: attedance.id }, attendanceUpdates, { new: true }, (err, doc) => {
+            if (err) {
+                return res.json({ success: false, status: 500, err: err.message });
+            }
+        });
+    })).then(function(data) {
+        return res.json({ success: true, status: 200 });
     });
 }
 
