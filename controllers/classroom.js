@@ -428,38 +428,49 @@ exports.endClassroom = function(req, res) {
     let privilege = req.body.privilege;
 
     if (privilege >= 99) {
-        Classroom.findOne({ roomSID: roomId }, function(err, data) {
+        Classroom.findOne({ _id: roomId }, function(err, data) {
             if (err)
                 return res.json({ success: false, status: 500, msg: "DB error" });
             else if (data != undefined && data != null) {
-                twClient.rooms(roomId)
-                    .fetch()
-                    .then(room => {
-                        if (room.status == "completed") { // decide current is completed or not
-                            Classroom.remove({ roomSID: roomId }, function(err, data) {
-                                if (err)
-                                    return res.json({ success: false, status: 500, msg: "DB error" });
-                                else if (data != undefined && data != null) {
-                                    return res.json({ success: true, status: 200, msg: "Successfully ended" });
-                                } else
-                                    return res.json({ success: false, status: 404, msg: "Not Found" });
-                            });
-                        } else {
-                            twClient.rooms(roomId)
-                                .update({ status: "completed" }) // complete the room
-                                .then(room => {
-                                    return res.json({ success: true, status: 200, msg: "Successfully ended" });
-                                })
-                                .catch(message => {
-                                    console.log(message)
-                                    res.json({ success: false, status: 400, msg: message })
+                if (data.roomSID != undefined && data.roomSID != null) {
+                    twClient.rooms(data.roomSID)
+                        .fetch()
+                        .then(room => {
+                            if (room.status == "completed") { // decide current is completed or not
+                                Classroom.remove({ _id: roomId }, function(err, data) {
+                                    if (err)
+                                        return res.json({ success: false, status: 500, msg: "DB error" });
+                                    else if (data != undefined && data != null) {
+                                        return res.json({ success: true, status: 200, msg: "Successfully ended" });
+                                    } else
+                                        return res.json({ success: false, status: 404, msg: "Not Found" });
                                 });
-                        }
-                    })
-                    .catch(message => {
-                        console.log(message)
-                        res.json({ success: false, status: 400, msg: message })
+                            } else {
+                                twClient.rooms(data.roomSID)
+                                    .update({ status: "completed" }) // complete the room
+                                    .then(room => {
+                                        return res.json({ success: true, status: 200, msg: "Successfully ended" });
+                                    })
+                                    .catch(message => {
+                                        console.log(message)
+                                        res.json({ success: false, status: 400, msg: message })
+                                    });
+                            }
+                        })
+                        .catch(message => {
+                            console.log(message)
+                            res.json({ success: false, status: 400, msg: message })
+                        });
+                } else {
+                    Classroom.remove({ _id: roomId }, function(err, data) {
+                        if (err)
+                            return res.json({ success: false, status: 500, msg: "DB error" });
+                        else if (data != undefined && data != null) {
+                            return res.json({ success: true, status: 200, msg: "Successfully ended" });
+                        } else
+                            return res.json({ success: false, status: 404, msg: "Not Found" });
                     });
+                }
             } else
                 return res.json({ success: false, status: 404, msg: "Not Found" });
         });
