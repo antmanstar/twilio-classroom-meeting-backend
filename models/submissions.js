@@ -3,21 +3,26 @@ let mongoosePaginate = require("mongoose-paginate");
 let Schema = mongoose.Schema;
 
 //assignment schema definition
-let submissionSchema = new Schema({
-  assignment_id: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "assignment"
+let submissionSchema = new Schema(
+  {
+    assignment_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "assignment"
+    },
+    submitted_date: Date,
+    tiltle: String,
+    user_id: {
+      type: mongoose.Schema.Types.ObjectId
+    },
+    file: [String],
+    grades: String,
+    total_marks: String,
+    status: { type: Boolean, default: true }
   },
-  submitted_date: Date,
-  tiltle: String,
-  user_id: {
-    type: mongoose.Schema.Types.ObjectId
-  },
-  file: String,
-  grades: String,
-  total_marks: String,
-  status: { type: Boolean, default: true }
-});
+  {
+    timestamps: true
+  }
+);
 
 // Sets the createdAt parameter equal to the current time
 submissionSchema.pre("save", next => {
