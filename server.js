@@ -31,7 +31,7 @@ if (process.env.NODE_ENV == 'dev') {
 
     port = args.port;
 } else if (process.env.NODE_ENV == 'test' || process.env.NODE_ENV == 'acceptance') {
-    port = 8080;
+    port = process.env.PORT || 8080;
 } else if (process.env.NODE_ENV == 'prod') {
 
     require('newrelic');
