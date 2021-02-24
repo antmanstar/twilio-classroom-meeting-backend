@@ -150,8 +150,8 @@ router.get('/classroom/:cid', classroom_controller.getClassroomByRoomId);
  *    }
  */
 router.get(
-  "/university/:id/all",
-  classroom_controller.getAllClassroomsByUniversity
+    "/university/:id/all",
+    classroom_controller.getAllClassroomsByUniversity
 );
 
 /**
@@ -259,8 +259,8 @@ router.post("/university", classroom_controller.createUniversityClassroom);
  *    }
  */
 router.delete(
-  "/universtiy/:id/all",
-  classroom_controller.delAllClassroomsByUniversity
+    "/universtiy/:id/all",
+    classroom_controller.delAllClassroomsByUniversity
 );
 
 /**
@@ -536,8 +536,8 @@ router.get("/participant/:pid/rec", classroom_controller.getAllRecordingsByPId);
  *    }  
  */
 router.get(
-  "/classroom/:id/participant/:pid/cmp",
-  classroom_controller.createCompositionOfRecording
+    "/classroom/:id/participant/:pid/cmp",
+    classroom_controller.createCompositionOfRecording
 );
 
 /**
