@@ -199,9 +199,11 @@ exports.updateClassroom = function(req, res) {
     let weightAge = req.body.weightAge;
     let privilege = req.body.privilege;
     let status = req.body.status;
+    let roomName = req.body.roomName;
+    let schedule = req.body.schedule;
 
     if (teacherId != undefined || teacherId != null) {
-        classroomUpdates.teacherId = teacherId;
+        classroomUpdates.teacher = teacherId;
     }
 
     if (markAttendance != undefined || markAttendance != null) {
@@ -214,6 +216,14 @@ exports.updateClassroom = function(req, res) {
 
     if (status != undefined || status != null) {
         classroomUpdates.status = status;
+    }
+
+    if (roomName != undefined || roomName != null) {
+        classroomUpdates.uniqueName = roomName;
+    }
+
+    if (schedule != undefined || schedule != null) {
+        classroomUpdates.schedule = schedule;
     }
 
     if (privilege >= 99) { // only administrator can creat the room
