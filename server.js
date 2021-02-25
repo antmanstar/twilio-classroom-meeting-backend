@@ -33,11 +33,8 @@ if (process.env.NODE_ENV == 'dev') {
 } else if (process.env.NODE_ENV == 'test' || process.env.NODE_ENV == 'acceptance') {
     port = process.env.PORT || 8080;
 } else if (process.env.NODE_ENV == 'prod') {
-
     require('newrelic');
-
     port = 80;
-
 } else {
     throw new Error("Set up development variable. 'dev', 'test', 'acceptance', 'prod'");
 }
