@@ -207,7 +207,6 @@ function uploadSubmission(req, res) {
       }
     })
     .catch(err => {
-      
       console.log({ err });
       return res.json({
         success: false,
@@ -329,10 +328,43 @@ function editSubmission(req, res) {
     });
 }
 
+/**
+ * Api to edit  assignment from id
+ * @param {Object} req , request object
+ * @param {Object} res , response object
+ */
+function updateAssignmentById(req, res) {
+  let { assignmentId } = req.params;
+  assignment_model
+    .findOneAndUpdate(
+      {
+        _id: assignmentId
+      },
+      {
+        $set: req.body
+      },
+      {
+        new: true
+      }
+    )
+    .then(result => {
+      return res.json({
+        success: true,
+        status: 200,
+        result
+      });
+    })
+    .catch(err => {
+      console.log({ err });
+      return res.json({ success: false, status: 500, msg: "DB error" });
+    });
+}
+
 module.exports = {
   createAssignment,
   getAllAssignmentFromClass,
   getAssignmentById,
+  updateAssignmentById,
   deleteAssignmentById,
   uploadSubmission,
   fetchSubmissionfromId,
