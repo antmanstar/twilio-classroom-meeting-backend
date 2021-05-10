@@ -78,6 +78,7 @@ exports.getAllClassroomsByUniversity = function(req, res) {
 
 // create the classroom
 exports.createUniversityClassroom = function(req, res) {
+    let mobile = req.body.mobile;
     let accountId = req.account._id;
     let universityId = req.body.uid;
     let uniqueName = req.body.roomName

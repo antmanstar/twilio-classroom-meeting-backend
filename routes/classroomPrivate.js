@@ -626,8 +626,8 @@ router.get(
 );
 
 router.put(
-  "/classroom/assignment/:assignmentId",
-  service.updateAssignmentById
+    "/classroom/assignment/:assignmentId",
+    service.updateAssignmentById
 );
 router.delete(
     "/classroom/deleteAssignment/:assignmentId",
