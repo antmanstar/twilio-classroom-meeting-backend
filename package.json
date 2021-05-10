@@ -8,12 +8,16 @@
     },
     "scripts": {
         "test": "mocha --timeout 15000 || true",
-        "start": "node server.js"
+        "start": "node server.js",
+        "staging": "export NODE_ENV=test && node server.js"
     },
     "author": "marcelopiomsf",
     "license": "ISC",
     "dependencies": {
-        "@weloveeducation/sdk": "^1.0.10",
+        "@weloveeducation/sdk": "^1.0.20",
+        "mongoose-float": "^1.0.2",
+        "mongoose-paginate": "^5.0.3",
+        "twilio": "^3.42.0",
         "bcryptjs": "^2.4.3",
         "body-parser": "^1.18.2",
         "compression": "^1.7.1",
@@ -23,13 +27,10 @@
         "jsonwebtoken": "^8.1.0",
         "minimist": "^1.2.0",
         "mongoose": "^5.9.7",
-        "mongoose-float": "^1.0.2",
-        "mongoose-paginate": "^5.0.3",
         "morgan": "^1.9.0",
         "newrelic": "^6.5.0",
         "passport": "^0.4.0",
-        "passport-jwt": "^4.0.0",
-        "twilio": "^3.42.0"
+        "passport-jwt": "^4.0.0"
     },
     "devDependencies": {
         "chai": "^4.1.2",

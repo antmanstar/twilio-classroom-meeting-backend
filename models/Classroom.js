@@ -7,10 +7,6 @@ let bcrypt = require('bcryptjs');
 
 //classroom schema definition
 let ClassroomSchema = new Schema({
-    recordParticipantsOnConnect: {
-        type: Boolean,
-        required: true
-    },
     statusCallback: {
         type: String
     },
@@ -26,7 +22,9 @@ let ClassroomSchema = new Schema({
         title: { type: String }
     }],
     status: { // The status of the room. Can be: in-progress, failed, or completed
-        type: String
+        type: String,
+        default: 'INACTIVE',
+        enum: ["ACTIVE", "INACTIVE"]
     },
     minPrivilege: { // minimum privilege of participant who can join to the classroom
         type: Number,
@@ -55,8 +53,7 @@ let ClassroomSchema = new Schema({
         required: true
     },
     roomSID: { // The unique string that we created to identify the Room resource.
-        type: String,
-        required: true
+        type: String
     },
     maxParticipants: {
         type: Number
@@ -70,6 +67,10 @@ let ClassroomSchema = new Schema({
     markAttendance: {
         type: Boolean
     },
+    weightAge: {
+        type: Number,
+        default: 0
+    },
     schedule: [{
         days: {
             type: String
@@ -81,29 +82,10 @@ let ClassroomSchema = new Schema({
             type: Date
         }
     }],
-    assignments: [{
-        assignmentId: { type: String }
-    }],
     members: [{
         accountId: {
             type: String
         },
-        attendence: [{
-            date: { type: Date },
-            present: { type: Boolean },
-            timeIn: { type: Date },
-            timeOut: { type: Date },
-            timeDuration: { type: Number }
-        }],
-        submission: [{
-            assignmentId: { type: String },
-            date: { type: Date },
-            submittedDate: { type: Date },
-            title: { type: String },
-            file: { type: String },
-            grade: { type: Number },
-            totalMark: { type: Number }
-        }],
         finalGrade: {
             type: Number,
             default: 0

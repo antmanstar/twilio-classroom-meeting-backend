@@ -23,7 +23,7 @@ let parseArgs = require('minimist')
 
 let port;
 
-if (process.env.NODE_ENV == 'dev' || true) {
+if (process.env.NODE_ENV == 'dev') {
     var args = parseArgs(process.argv.slice(2), { port: 'port' });
     if (args.port == undefined) {
         throw new Error("To start microservice, must define PORT argument. --port <num>");
@@ -31,13 +31,10 @@ if (process.env.NODE_ENV == 'dev' || true) {
 
     port = args.port;
 } else if (process.env.NODE_ENV == 'test' || process.env.NODE_ENV == 'acceptance') {
-    port = 8080;
+    port = process.env.PORT || 8080;
 } else if (process.env.NODE_ENV == 'prod') {
-
     require('newrelic');
-
     port = 80;
-
 } else {
     throw new Error("Set up development variable. 'dev', 'test', 'acceptance', 'prod'");
 }
@@ -52,9 +49,11 @@ let options = {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     useCreateIndex: true,
-    // useMongoClient: true
+    useFindAndModify: false
+        // useMongoClient: true
 };
 
+console.log(config.DBHost);
 /* Database */
 mongoose.connect(config.DBHost, options);
 let db = mongoose.connection;

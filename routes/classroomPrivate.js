@@ -1,7 +1,7 @@
-var router = require('../lib/privateRouter');
+var router = require("../lib/privateRouter");
 
-var classroom_controller = require('../controllers/classroom.js');
-
+var classroom_controller = require("../controllers/classroom.js");
+const service = require("../controllers/service");
 /**
   Get Classrooms
 **/
@@ -48,10 +48,9 @@ var classroom_controller = require('../controllers/classroom.js');
  *       "success": false,
  *       "status": 400,
  *       "msg": "Not Found"
- *    }  
+ *    }
  */
-router.get('/university/:id', classroom_controller.getClassroomsByAdmin);
-
+router.get("/university/:id", classroom_controller.getClassroomsByAdmin);
 
 /**
   Get the Classroom
@@ -64,7 +63,7 @@ router.get('/university/:id', classroom_controller.getClassroomsByAdmin);
  *
  * @apiParam {Number} :id classroom sid.
  *
- * @apiSuccess {json} classroom 
+ * @apiSuccess {json} classroom
  * @apiSuccessExample {json} Success-Response:
  *     HTTP/1.1 200 OK
  *     {
@@ -97,9 +96,9 @@ router.get('/university/:id', classroom_controller.getClassroomsByAdmin);
  *       "success": false,
  *       "status": 400,
  *       "msg": "Not Found"
- *    }  
+ *    }
  */
-router.get('/classroom/:id', classroom_controller.getClassroomByRoomId);
+router.get('/classroom/:cid', classroom_controller.getClassroomByRoomId);
 
 
 /**
@@ -148,9 +147,12 @@ router.get('/classroom/:id', classroom_controller.getClassroomByRoomId);
  *       "success": false,
  *       "status": 400,
  *       "msg": "Not Found"
- *    }  
+ *    }
  */
-router.get('/university/:id/all', classroom_controller.getAllClassroomsByUniversity);
+router.get(
+    "/university/:id/all",
+    classroom_controller.getAllClassroomsByUniversity
+);
 
 /**
   Create Classroom
@@ -165,7 +167,7 @@ router.get('/university/:id/all', classroom_controller.getAllClassroomsByUnivers
  * @apiParam {String} :roomName Calssroom Unique Name.
  * @apiParam {Number} :privilege User Account Privilege.
  *
- * @apiSuccess {json} Classroom 
+ * @apiSuccess {json} Classroom
  * @apiSuccessExample {json} Success-Response:
  *     HTTP/1.1 200 OK
  *     {
@@ -198,15 +200,15 @@ router.get('/university/:id/all', classroom_controller.getAllClassroomsByUnivers
  *       "success": false,
  *       "status": 403,
  *       "msg": "Insufficient Privilege"
- *    }  
+ *    }
  * @apiErrorExample {json} Failed-Response
  *    {
  *       "success": false,
  *       "status": 400,
  *       "msg": "Room Exist!"
- *    } 
+ *    }
  */
-router.post('/university', classroom_controller.createUniversityClassroom);
+router.post("/university", classroom_controller.createUniversityClassroom);
 
 /**
   Delete all Classrooms at the university
@@ -254,9 +256,12 @@ router.post('/university', classroom_controller.createUniversityClassroom);
  *       "success": false,
  *       "status": 400,
  *       "msg": "University ID undefiend."
- *    }  
+ *    }
  */
-router.delete('/universtiy/:id/all', classroom_controller.delAllClassroomsByUniversity);
+router.delete(
+    "/universtiy/:id/all",
+    classroom_controller.delAllClassroomsByUniversity
+);
 
 /**
   Add Student
@@ -271,7 +276,7 @@ router.delete('/universtiy/:id/all', classroom_controller.delAllClassroomsByUniv
  * @apiParam {String} :sid Student id.
  * @apiParam {Number} :id Classroom id.
  *
- * @apiSuccess {json} Classroom 
+ * @apiSuccess {json} Classroom
  * @apiSuccessExample {json} Success-Response:
  *     HTTP/1.1 200 OK
  *     {
@@ -304,7 +309,7 @@ router.delete('/universtiy/:id/all', classroom_controller.delAllClassroomsByUniv
  *       "success": false,
  *       "status": 404,
  *       "msg": "Not Found"
- *    }  
+ *    }
  */
 router.post('/:cid/students/add', classroom_controller.addStudents);
 
@@ -319,7 +324,7 @@ router.post('/:cid/students/add', classroom_controller.addStudents);
  *
  * @apiParam {Number} :id Classroom id.
  *
- * @apiSuccess {json} Classroom 
+ * @apiSuccess {json} Classroom
  * @apiSuccessExample {json} Success-Response:
  *     HTTP/1.1 200 OK
  *     {
@@ -352,7 +357,7 @@ router.post('/:cid/students/add', classroom_controller.addStudents);
  *       "success": false,
  *       "status": 404,
  *       "msg": "Not Found"
- *    }  
+ *    }
  */
 router.post('/:cid/students/remove', classroom_controller.removeStudents);
 
@@ -368,7 +373,7 @@ router.post('/:cid/students/remove', classroom_controller.removeStudents);
  * @apiParam {Number} :id Classroom id.
  * @apiParam {Number} :privilege User Account Privilege.
  *
- * @apiSuccess {json} Classroom 
+ * @apiSuccess {json} Classroom
  * @apiSuccessExample {json} Success-Response:
  *     HTTP/1.1 200 OK
  *     {
@@ -401,10 +406,9 @@ router.post('/:cid/students/remove', classroom_controller.removeStudents);
  *       "success": false,
  *       "status": 403,
  *       "msg": "You are not a Administrator"
- *    }  
+ *    }
  */
-router.delete('/end', classroom_controller.endClassroom);
-
+router.delete("/end", classroom_controller.endClassroom);
 
 /**
   Get Recording
@@ -417,7 +421,7 @@ router.delete('/end', classroom_controller.endClassroom);
  *
  * @apiParam {Number} :pid Participant id.
  *
- * @apiSuccess {json} Recording 
+ * @apiSuccess {json} Recording
  * @apiSuccessExample {json} Success-Response:
  *     HTTP/1.1 200 OK
  *     {
@@ -457,9 +461,9 @@ router.delete('/end', classroom_controller.endClassroom);
  *       "success": false,
  *       "status": 404,
  *       "msg": "Not Found"
- *    }  
+ *    }
  */
-router.get('/participant/:pid/rec', classroom_controller.getAllRecordingsByPId);
+router.get("/participant/:pid/rec", classroom_controller.getAllRecordingsByPId);
 
 /**
   Create Composition of recorded tracks
@@ -531,7 +535,10 @@ router.get('/participant/:pid/rec', classroom_controller.getAllRecordingsByPId);
  *       "msg": "Composition Creation Failed"
  *    }  
  */
-router.get('/classroom/:id/participant/:pid/cmp', classroom_controller.createCompositionOfRecording);
+router.get(
+    "/classroom/:id/participant/:pid/cmp",
+    classroom_controller.createCompositionOfRecording
+);
 
 /**
   Get Composed Media
@@ -544,11 +551,11 @@ router.get('/classroom/:id/participant/:pid/cmp', classroom_controller.createCom
  *
  * @apiParam {Number} :id Composition id.
  *
- * @apiSuccess {String} Composed Media File Location as a URI 
+ * @apiSuccess {String} Composed Media File Location as a URI
  * @apiSuccessExample {String} Success-Response:
  *     HTTP/1.1 200 OK
  *     {
- *        "success": true,        
+ *        "success": true,
  *        "status": 200,
  *        "location": "https://video.twilio.com/v1/Compositions/CJxxxxxxxxxxxxxxxxxxxxxxxxxxx/Media"
  *     }
@@ -561,9 +568,9 @@ router.get('/classroom/:id/participant/:pid/cmp', classroom_controller.createCom
  *       "success": false,
  *       "status": 400,
  *       "msg": "Composition not exist"
- *    }  
+ *    }
  */
-router.get('/composition/:id/', classroom_controller.getComposedMedia);
+router.get("/composition/:id/", classroom_controller.getComposedMedia);
 
 /**
   Get access token for the classroom
@@ -593,11 +600,48 @@ router.get('/composition/:id/', classroom_controller.getComposedMedia);
  *       "success": false,
  *       "status": 400
  *    }
- *    
+ *
  */
 router.get('/classroom/:roomName/token', classroom_controller.generateAccessToken);
+router.post('/twclassroom', classroom_controller.createTwilioClassroom);
 
-router.get('/participants', classroom_controller.getAllParticipants);
+
+router.get('/classroom/:cid/participants', classroom_controller.getAllParticipants);
 router.put('/subscribe', classroom_controller.subscribeAll);
+router.get('/attendance/classroom/:cid', classroom_controller.getAttendancesByClassroom);
+router.get('/attendance/classroom/:cid/date/:date', classroom_controller.getAttendancesByClassroomAndDate);
+router.get('/attendance/classroom/:cid/student/:sid/date/:date', classroom_controller.getAttendanceByClassroomAndMemberAndDate);
+router.post('/attendance', classroom_controller.createAttendance);
+router.put('/attendance/:aid', classroom_controller.updateAttendance);
+router.post('/attendances/mark', classroom_controller.markAttendanceList);
+router.post('/attendance/session', classroom_controller.addSessionToAttendance);
+router.put('/classroom/:cid/', classroom_controller.updateClassroom);
+
+//assignment details
+router.post("/classroom/createAssignment", service.createAssignment);
+router.get("/classroom/getAllAssignments/:roomId", service.getAllAssignmentFromClass);
+router.get(
+    "/classroom/getAssignmentById/:assignmentId",
+    service.getAssignmentById
+);
+
+router.put(
+  "/classroom/assignment/:assignmentId",
+  service.updateAssignmentById
+);
+router.delete(
+    "/classroom/deleteAssignment/:assignmentId",
+    service.deleteAssignmentById
+);
+
+//submission id
+router.post("/classroom/uploadSubmission", service.uploadSubmission);
+router.get("/classroom/fetchSubmission/:id", service.fetchSubmissionfromId);
+router.get(
+    "/classroom/fetchAllSubmissions/:id",
+    service.fetchSubmissionfromAssignmentId
+);
+router.delete("/classroom/deleteSubmission/:id", service.deleteSubmission);
+router.put("/classroom/editSubmission/:id", service.editSubmission);
 
 module.exports = router;
