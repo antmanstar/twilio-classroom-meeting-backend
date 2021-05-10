@@ -305,7 +305,7 @@ exports.createAttendance = function(req, res) {
         return res.json({
             success: false,
             status: 400,
-            msg: "date is required"
+            msg: "Date is required"
         });
     }
 

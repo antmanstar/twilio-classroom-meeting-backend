@@ -14,7 +14,7 @@
     "author": "marcelopiomsf",
     "license": "ISC",
     "dependencies": {
-        "@weloveeducation/sdk": "^1.0.10",
+        "@weloveeducation/sdk": "^1.0.20",
         "mongoose-float": "^1.0.2",
         "mongoose-paginate": "^5.0.3",
         "twilio": "^3.42.0",
